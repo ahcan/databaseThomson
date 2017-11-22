@@ -13,7 +13,7 @@ def create_tbJob():
 def insert_job(host):
     response_xml = File().get_response('JobGetListRsp.xml')
     db = Database();
-    sql = Job().pares_xml(response_xml, host)
+    sql = Job().parse_xml(response_xml, host)
     if db.execute_query(sql):
         print "success"
     else:
