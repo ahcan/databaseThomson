@@ -26,9 +26,13 @@ class DateTime:
         
     #data input string YYYY-MM-DDTHH:mm:ss.000Z, return a string
     def conver_UTC_2_unix_timestamp(self, utc_time):
-        ts = time.strptime(utc_time[:19], "%Y-%m-%dT%H:%M:%S")
-        human_date = time.strftime("%Y-%m-%d %H:%M:%S", ts)
-        return (int(time.mktime(time.strptime(human_date, '%Y-%m-%d %H:%M:%S'))) - time.timezone)
+        try:
+            ts = time.strptime(utc_time[:19], "%Y-%m-%dT%H:%M:%S")
+            human_date = time.strftime("%Y-%m-%d %H:%M:%S", ts)
+            return (int(time.mktime(time.strptime(human_date, '%Y-%m-%d %H:%M:%S'))) - time.timezone)
+        except Exception as e:
+            return 0
+        
 
     def get_now_as_human_creadeble(self):
         return (time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()))

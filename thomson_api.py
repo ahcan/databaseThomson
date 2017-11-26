@@ -13,9 +13,9 @@ class Job:
         JId = dom_object.attributes['JId'].value if "'JId'" in str_tmp else ''
         Prog = dom_object.attributes['Prog'].value if "'Prog'" in str_tmp else ''
         StartDate =  dom_object.attributes['StartDate'].value \
-        if "'StartDate'" in str_tmp else ''
+        if "'StartDate'" in str_tmp else 'null'
         Ver = dom_object.attributes['Ver'].value if "'Ver'" in str_tmp else ''
-        EndDate = dom_object.attributes['EndDate'].value if "'EndDate'" in str_tmp else ''
+        EndDate = dom_object.attributes['EndDate'].value if "'EndDate'" in str_tmp else 'null'
         return State,Status,JId,Prog,StartDate,EndDate,Ver
 
     def parse_xml(self, xml, host):
@@ -25,7 +25,8 @@ class Job:
         for s in itemlist:
             State,Status,JId,Prog,StartDate,EndDate,Ver = self.parse_dom_object(s)
             
-            sql += "insert into job (jid, host, state, status, prog, startdate, enddate, ver) values(%d,%s,%s,%s,%d,%d,%d,%d);"%(int(JId), str(host),str(State), str(Status), int(Prog), DateTime().conver_UTC_2_unix_timestamp(StartDate), DateTime().conver_UTC_2_unix_timestamp(EndDate), int(Ver)) 
+            sql += "insert into job (jid, host, state, status, prog, ver, startdate, enddate) values(%d,'%s','%s','%s',%d,%d,%d,%d);"%(int(JId), host, State, Status, int(Prog), int(Ver), DateTime().conver_UTC_2_unix_timestamp(StartDate), DateTime().conver_UTC_2_unix_timestamp(EndDate)) 
+        print sql
         return sql
     # return json theo name id job
     def parse_xml_name(self, xml):
