@@ -23,6 +23,7 @@ class Database:
         session = self.connect()
         cur=session.cursor()
         cur.execute(query)
-        session.commit()
+        session.autocommit(True)
+        # session.commit()
         self.close_connect(session)
         return 1
