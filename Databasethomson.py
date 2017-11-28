@@ -16,14 +16,25 @@ class Database:
     def close_connect(self, session):
         return session.close()
 
-    def execute_query(self, query):
+    def execute_nonquery(self, query):
         if not query:
             print 'No query!'
             return 0
         session = self.connect()
         cur=session.cursor()
         cur.execute(query)
-        session.autocommit(True)
-        # session.commit()
+        session.commit()
         self.close_connect(session)
         return 1
+
+    def execute_query(self, query):
+        session = self.connect()
+        try:
+            cur =  session.cursor()
+            cur.execute(query)
+            results = cur.fetchall()
+            self.close_connect(session)
+            return results
+        except Exception as e:
+            raise e
+            
