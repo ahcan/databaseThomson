@@ -18,16 +18,16 @@ class Job:
         EndDate = dom_object.attributes['EndDate'].value if "'EndDate'" in str_tmp else 'null'
         return State,Status,JId,Prog,StartDate,EndDate,Ver
 
-    def parse_xml(self, xml, host):
+    def parse_xml_2_query(self, xml, host):
         xmldoc = minidom.parseString(xml)
         itemlist = xmldoc.getElementsByTagName('jGetList:JItem')
-        sql = ""
+        sql = "truncate job;"
         for s in itemlist:
             State,Status,JId,Prog,StartDate,EndDate,Ver = self.parse_dom_object(s)
             
             sql += "insert into job (jid, host, state, status, prog, ver, startdate, enddate) values(%d,'%s','%s','%s',%d,%d,%d,%d);"%(int(JId), host, State, Status, int(Prog), int(Ver), DateTime().conver_UTC_2_unix_timestamp(StartDate), DateTime().conver_UTC_2_unix_timestamp(EndDate)) 
-        print sql
         return sql
+    
     # return json theo name id job
     def parse_xml_name(self, xml):
         xmldoc = minidom.parseString(xml)
@@ -178,3 +178,63 @@ class Job:
                             if EndDate else ''
                     })
         return args
+
+######################################
+#-----------Job Detail---------------#
+######################################
+class JobDetail:
+    def __init__(self, jid, host):
+        from setting.xmlReq.JobDetailReq import HEADERS, BODY
+        self.headers = HEADERS
+        self.body = BODY
+        self.jid = jid
+        self.host = host
+    def get_param_xml(self):
+        # body = body.replace('JobID', str(self.jid))
+        #response_xml = Thomson().get_response(self.headers, self.body)
+        response_xml = File().get_response('responseXml/JobGetParamsRsp.xml')
+        return response_xml
+    def parse_xml_2_query(self, xml):
+        xmldoc = minidom.parseString(xml)
+        joblist = xmldoc.getElementsByTagName('wd:Job')
+        job = joblist[0]
+        jobname = job.attributes['name'].value if "'name'" in str(job.attributes.items()) else ''
+        workflowIdRef = job.attributes['workflowIdRef'].value if "'workflowIdRef'" in str(job.attributes.items()) else ''
+        return """insert into job_param(jid, host, name, wid) values(%d, '%s', '%s', '%s');"""%(int(self.jid), self.host, jobname.encode('utf-8'), workflowIdRef.encode('utf-8'))
+
+    def get_param(self):
+        response_xml = self.get_param_xml()
+        return response_xml
+
+######################################
+#-----------WORKFLOW-----------------#
+######################################
+class Workflow:
+    def __init__(self, host):
+        from setting.xmlReq.WorkflowReq import HEADERS
+        self.headers = HEADERS
+        self.host = host
+
+    def parse_xml_2_query(self, xml):
+        xmldoc = minidom.parseString(xml)
+        itemlist = xmldoc.getElementsByTagName('wGetList:WItem')
+        sql =""
+        for s in itemlist:
+            str_tmp = str(s.attributes.items())
+            Name = s.attributes['Name'].value if "'Name'" in str_tmp else ''
+            WId = s.attributes['WId'].value if "'WId'" in str_tmp else ''
+            PubVer = s.attributes['PubVer'].value if "'PubVer'" in str_tmp else ''
+            PriVer = s.attributes['PriVer'].value if "'PriVer'" in str_tmp else ''
+            sql += "insert into  workflow(wid, name, host, pubver, priver) values('%s','%s','%s',%d,%d);"%(WId.encode('utf-8'), Name.encode('utf-8'), self.host, int(PubVer), int(PriVer))
+            # print sql
+        return sql
+
+    def get_workflow_xml(self):
+        from setting.xmlReq.WorkflowReq import BODY
+        body = BODY
+        #response_xml = Thomson().get_response(self.headers, body)
+        response_xml = File().get_response('responseXml/WorklowGetListRsp.xml')
+        return response_xml
+    def get_workflow(self):
+        response_xml = self.get_workflow_xml()
+        return response_xml
