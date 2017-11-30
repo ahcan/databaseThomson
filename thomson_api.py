@@ -1,10 +1,28 @@
 from xml.dom import minidom
+import requests
+from requests.auth import HTTPDigestAuth
 from setting.DateTime import *
 from setting.File import *
+from setting import config as osDb
+
+class Thomson:
+    def __init__(self):
+        self.user = osDb.THOMSON_USER
+        self.passwd = osDb.THOMSON_PASSWORD
+        self.url = osDb.THOMSON_URL
+
+    def get_response(self, headers, body):
+        response = requests.post(self.url, data=body, headers=headers, \
+            auth=HTTPDigestAuth(self.user, self.passwd))
+        #print response.content
+        response_xml = response.content[response.content.find('<soapenv:Envelope') :\
+         response.content.find('</soapenv:Envelope>') + len('</soapenv:Envelope>')]
+        return response_xml
+
 class Job:
-    # def __init__(self):
-        # from setting.xmlReq.JobReq import HEADERS
-        # self.headers = HEADERS
+    def __init__(self):
+        from setting.xmlReq.JobReq import HEADERS
+        self.headers = HEADERS
 
     def parse_dom_object(self, dom_object):
         str_tmp = str(dom_object.attributes.items())
@@ -50,8 +68,8 @@ class Job:
     def get_job_xml(self):
         from setting.xmlReq.JobReq import BODY
         body = BODY
-        #response_xml = Thomson().get_response(self.headers, body)
-        response_xml = File().get_response('JobGetListRsp.xml')
+        response_xml = Thomson().get_response(self.headers, body)
+        #response_xml = File().get_response('JobGetListRsp.xml')
         return response_xml
 
     def get_jobid_list(self):
@@ -81,7 +99,7 @@ class Job:
         from setting.xmlReq.JobReq import WAITTING
         body = WAITTING
         #response_xml = Thomson().get_response(self.headers, body)
-        response_xml = File().get_response('JobGetListRsp.xml')
+        #response_xml = File().get_response('JobGetListRsp.xml')
         return response_xml
 
     def get_Waiting(self):
@@ -190,17 +208,21 @@ class JobDetail:
         self.jid = jid
         self.host = host
     def get_param_xml(self):
-        # body = body.replace('JobID', str(self.jid))
-        #response_xml = Thomson().get_response(self.headers, self.body)
-        response_xml = File().get_response('responseXml/JobGetParamsRsp.xml')
+        self.body = self.body.replace('JobID', str(self.jid))
+        response_xml = Thomson().get_response(self.headers, self.body)
+        #response_xml = File().get_response('responseXml/JobGetParamsRsp.xml')
         return response_xml
     def parse_xml_2_query(self, xml):
         xmldoc = minidom.parseString(xml)
         joblist = xmldoc.getElementsByTagName('wd:Job')
-        job = joblist[0]
-        jobname = job.attributes['name'].value if "'name'" in str(job.attributes.items()) else ''
-        workflowIdRef = job.attributes['workflowIdRef'].value if "'workflowIdRef'" in str(job.attributes.items()) else ''
-        return """insert into job_param(jid, host, name, wid) values(%d, '%s', '%s', '%s');"""%(int(self.jid), self.host, jobname.encode('utf-8'), workflowIdRef.encode('utf-8'))
+	try:
+            job = joblist[0]
+            jobname = job.attributes['name'].value if "'name'" in str(job.attributes.items()) else ''
+            workflowIdRef = job.attributes['workflowIdRef'].value if "'workflowIdRef'" in str(job.attributes.items()) else ''
+            return """insert into job_param(jid, host, name, wid) values(%d, '%s', '%s', '%s');"""%(int(self.jid), self.host, jobname.encode('utf-8'), workflowIdRef.encode('utf-8'))
+        except Exception as e:
+            print e
+            return ""
 
     def get_param(self):
         response_xml = self.get_param_xml()
@@ -232,8 +254,8 @@ class Workflow:
     def get_workflow_xml(self):
         from setting.xmlReq.WorkflowReq import BODY
         body = BODY
-        #response_xml = Thomson().get_response(self.headers, body)
-        response_xml = File().get_response('responseXml/WorklowGetListRsp.xml')
+        response_xml = Thomson().get_response(self.headers, body)
+        #response_xml = File().get_response('responseXml/WorklowGetListRsp.xml')
         return response_xml
     def get_workflow(self):
         response_xml = self.get_workflow_xml()

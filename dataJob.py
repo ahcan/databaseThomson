@@ -1,7 +1,7 @@
 from Databasethomson import Database
 from thomson_api import Job, JobDetail, Workflow
 from File import File
-import config as osDb
+from setting import config as osDb
 import os
 import threading
 from Queue import Queue
@@ -17,7 +17,7 @@ class threadparam(threading.Thread):
         self.job = job
 
     def run(self):
-        # time.sleep()
+        time.sleep(5)
         self.queue.put(self.job.parse_xml_2_query(self.job.get_param()))
         self.queue.task_done()
 
@@ -62,7 +62,7 @@ def insert_job(host):
     command = command_sql(sql)
     try:
         os.system(command)
-        print "success"
+        print "insert table job\n#####success#####"
     except Exception as e:
         raise e
 
@@ -82,7 +82,7 @@ def insert_param_thread(lstJid):
     command = command_sql(sql)
     try:
         os.system(command)
-        print "###success###"
+        print "insert table job_param\n#####success#####"
     except Exception as e:
         print e
 
@@ -113,7 +113,7 @@ def get_lstJob_id():
 def insert_workflow(host):
     sql = "truncate workflow;"
     response_xml = Workflow(host)
-    sql = response_xml.parse_xml_2_query(response_xml.get_workflow())
+    sql += response_xml.parse_xml_2_query(response_xml.get_workflow())
     # print sql
     command = command_sql(sql)
     try:
@@ -123,10 +123,12 @@ def insert_workflow(host):
         print e
 
 def command_sql(sql):
-    return """mysql -u%s -p%s %s -h %s -e "%s" """%(osDb.DATABASE_USER, osDb.DATABASE_PASSWORD, osDb.DATABASE_NAME, osDb.DATABASE_HOST, sql)
+    return """mysql -u%s -p'%s' %s -h %s -e "%s" """%(osDb.DATABASE_USER, osDb.DATABASE_PASSWORD, osDb.DATABASE_NAME, osDb.DATABASE_HOST, sql)
 
-# insert_job("localhost")
+insert_job(osDb.THOMSON_HOST)
 insert_param_thread(get_lstJob_id())
-# create_tbParam()
-# create_tbWorkflow()
-# insert_workflow("localhost")
+#insert_param(get_lstJob_id())
+#create_tbJob()
+#create_tbParam()
+#create_tbWorkflow()
+insert_workflow(osDb.THOMSON_HOST)
