@@ -1,7 +1,7 @@
 from Databasethomson import Database
 from thomson_api import Job, JobDetail, Workflow
 from File import File
-import config as osDb
+from setting import config as osDb
 import os
 import threading
 from Queue import Queue

@@ -1,6 +1,21 @@
 from xml.dom import minidom
 from setting.DateTime import *
 from setting.File import *
+
+class Thomson:
+    def __init__(self):
+        self.user = settings.user
+        self.passwd = settings.passwd
+        self.url = settings.url
+
+    def get_response(self, headers, body):
+        response = requests.post(self.url, data=body, headers=headers, \
+            auth=HTTPDigestAuth(self.user, self.passwd))
+        #print response.content
+        response_xml = response.content[response.content.find('<soapenv:Envelope') :\
+         response.content.find('</soapenv:Envelope>') + len('</soapenv:Envelope>')]
+        return response_xml
+
 class Job:
     # def __init__(self):
         # from setting.xmlReq.JobReq import HEADERS
