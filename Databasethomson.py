@@ -1,6 +1,6 @@
 import threading
 import MySQLdb as mdb
-from config import *
+from setting.config import *
 
 class Database:
     def __init__(self):

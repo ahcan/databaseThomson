@@ -1,6 +1,6 @@
 class File:
-    def __init__(self):
-        self.file_path = 'setting/'
+    def __init__(self, path):
+        self.file_path = path
 
     def read(self, filename):
         #print self.file_path + filename
@@ -18,3 +18,8 @@ class File:
     def get_response(self, filename):
         response = self.read(filename)
         return response
+
+    def write_log(self, filename, content):
+        f = open(self.file_path + filename, 'w')
+        f.write(content)
+        f.close()

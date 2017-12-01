@@ -8,18 +8,35 @@ from Queue import Queue
 import time
 
 
+threadLimiter = threading.BoundedSemaphore(10)
 class threadparam(threading.Thread):
     """docstring for threadparam"""
-    def __init__(self, queue, job):
+    def __init__(self, job):
         super(threadparam, self).__init__()
-        self.queue = queue
+        self.queue = Queue()
         # self.daemon  = daem
         self.job = job
 
     def run(self):
-        # time.sleep()
+        threadLimiter.acquire()
+        try:
+            self.work()
+        finally:
+            threadLimiter.release()
+        
+    def work(self):
+        time.sleep(0.1)
         self.queue.put(self.job.parse_xml_2_query(self.job.get_param()))
         self.queue.task_done()
+
+strQuery = ""
+mainQ = Queue()
+
+def thread_sql(jobDetail=None):
+    time.sleep(1)
+    global strQuery
+    strQuery += jobDetail.parse_xml_2_query(jobDetail.get_param())
+    mainQ.task_done()    
 
 #################################
 #---------create table----------#
@@ -55,36 +72,47 @@ def create_tbWorkflow():
 #################################
 
 #insert job table
-def insert_job(host):
+def insert_job(host=None):
+    global strQuery
+    strQuery += "truncate job; insert into job (jid, host, state, status, prog, ver, startdate, enddate) values"
     response_xml = Job().get_job_xml()
-    sql = Job().parse_xml_2_query(response_xml, host)
+    sql = Job().parse_xml_2_query(response_xml, host)[:-1]
+    sql = strQuery + sql + ";\n commit"
     print sql
     command = command_sql(sql)
     try:
         os.system(command)
-        print "success"
+        print "insert table job\n#####success#####"
     except Exception as e:
         raise e
+    finally:
+        strQuery =''
+    File('sql/').write_log("job.sql", sql)
 
 #insert param table
-def insert_param_thread(lstJid):
-    threads = []
-    sql = """truncate job_param;"""
-    lstJob = lstJid    
+def insert_param_thread(lstJid=None):
+
+    lstJob = lstJid
+    global strQuery
+    strQuery += "truncate job_param; insert into job_param(jid, host, name, wid) values "
     for job in lstJob:
+        mainQ.put(job)
         param = JobDetail(job['jid'], job['host'])
-        q = Queue()
-        threads.append(threadparam(q, param))
-        threads[lstJob.index(job)].setDaemon(True)
-        threads[lstJob.index(job)].start()
-    for t in threads:
-        sql +=  t.queue.get()
+        job = threading.Thread(target=thread_sql, kwargs={'jobDetail':param})
+        job.daemon = True
+        job.start()
+    mainQ.join()
+    sql = strQuery[:-1] + ";\ncommit"
+    print sql
     command = command_sql(sql)
     try:
         os.system(command)
-        print "###success###"
+        print "insert table job_param\n#####success#####"
     except Exception as e:
         print e
+    finally:
+        strQuery = ''
+    File("sql/").write_log("param_job.sql", sql)
 
 def insert_param(lstJid):
     sql = """truncate job_param;"""
@@ -98,6 +126,7 @@ def insert_param(lstJid):
         print "###success###"
     except Exception as e:
         raise e
+    File("sql/").write_log("param_log.sql", sql)
 
 #array list jid
 def get_lstJob_id():
@@ -110,23 +139,47 @@ def get_lstJob_id():
     return args
 
 #insert workflow table
-def insert_workflow(host):
-    sql = "truncate workflow;"
+def insert_workflow(host=None):
+    start = time.time()
+
+    sql = "truncate workflow; insert into  workflow(wid, name, host, pubver, priver) values"
     response_xml = Workflow(host)
-    sql = response_xml.parse_xml_2_query(response_xml.get_workflow())
-    # print sql
+    sql += response_xml.parse_xml_2_query(response_xml.get_workflow())[:1]
     command = command_sql(sql)
     try:
         os.system(command)
         print "insert table workflow\n#####success#####"
     except Exception as e:
         print e
+    File("sql/").write_log("workflow.sql", sql)
+    print ('End job: ', time.time() - start)
 
 def command_sql(sql):
-    return """mysql -u%s -p%s %s -h %s -e "%s" """%(osDb.DATABASE_USER, osDb.DATABASE_PASSWORD, osDb.DATABASE_NAME, osDb.DATABASE_HOST, sql)
+    return """mysql -u%s -p'%s' %s -h %s -e "%s" """%(osDb.DATABASE_USER, osDb.DATABASE_PASSWORD, osDb.DATABASE_NAME, osDb.DATABASE_HOST, sql)
 
-# insert_job("localhost")
-insert_param_thread(get_lstJob_id())
-# create_tbParam()
-# create_tbWorkflow()
-# insert_workflow("localhost")
+def write_sql_file(filename):
+
+    return True
+
+#create_tbJob()
+#create_tbParam()
+#create_tbWorkflow()
+# insert_job(osDb.THOMSON_HOST)
+# insert_param_thread(get_lstJob_id())
+# insert_workflow(osDb.THOMSON_HOST)
+#insert_param(get_lstJob_id())
+def main():
+    threads = []
+    thread_job = threading.Thread(target='insert_job', kwargs={'host': osDb.THOMSON_HOST})
+    thread_job.start()
+    thread_param = threading.Thread(target='insert_param_thread', kwargs={'lstJid':get_lstJob_id()})
+    thread_param.start()
+    thread_workflow = threading.Thread(target='insert_workflow', kwargs={'host': osDb.THOMSON_HOST})
+    thread_workflow.start()
+    threads.append(thread_workflow)
+    threads.append(thread_job)
+    threads.append( thread_param)
+    for t in threads:
+        t.join()
+if __name__ == '__main__':
+    main()
