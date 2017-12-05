@@ -1,0 +1,7 @@
+﻿<soapenv:Envelope
+xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+xmlns:job="JobAbort">
+  <soapenv:Body>
+    <job:JobAbortReq Cmd="Start" OpV="01.00.00" JId="JOB_ID"/>
+  </soapenv:Body>
+</soapenv:Envelope>

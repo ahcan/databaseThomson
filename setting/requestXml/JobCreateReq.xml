@@ -1,0 +1,23 @@
+﻿<soapenv:Envelope
+xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+xmlns:job="JobCreate" xmlns:wor="WorkflowDesc">
+  <soapenv:Body>
+    <job:JobCreateReq Cmd="Start" OpV="01.00.00" ConsistencyBL="noerror_nowarning" StartJob="TRUE_FALSE">
+      <wor:Job name="JOB_NAME" workflowIdRef="WORKFLOW_ID">     
+      </wor:Job>
+    </job:JobCreateReq>
+  </soapenv:Body>
+</soapenv:Envelope>
+
+<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:job="JobCreate" xmlns:wor="WorkflowDesc">
+	<soapenv:Body>
+		<job:JobCreateReq Cmd="Start" OpV="01.00.00" ConsistencyBL="noerror_nowarning">
+			<wor:Job name="my job" workflowIdRef="WorkflowUser_TS over IP transcode">
+				<wor:ParamDesc value="225.1.4.5#4" name="Input IP address" />
+				<wor:ParamDesc value="128000" name="Output audio bitrate" />
+				<wor:ParamDesc value="1500000" name="Output video bitrate" />
+				<wor:ParamDesc value="225.2.4.5#4" name="Output IP address" />
+			</wor:Job>
+		</job:JobCreateReq>
+	</soapenv:Body>
+</soapenv:Envelope>

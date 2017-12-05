@@ -1,0 +1,26 @@
+﻿<soapenv:Envelope
+xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+xmlns:job="JobModify" xmlns:wor="WorkflowDesc">
+  <soapenv:Body>
+    <job:JobModifyReq Cmd="Start" OpV="01.00.00" JId="JOB_ID"
+    ConsistencyBL="noerror_nowarning"
+    RebalancingMode="RebalancingNotAllowed" >
+      <wor:Job name="JOB_NAME" workflowIdRef="WORKFLOW_ID">       
+      </wor:Job>
+    </job:JobModifyReq>
+  </soapenv:Body>
+</soapenv:Envelope>
+
+<soapenv:Envelope
+ xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
+ xmlns:job="JobModify" xmlns:wor="WorkflowDesc">
+	<soapenv:Body>
+		<job:JobModifyReq Cmd="Start" OpV="01.00.00" JId="505"
+		 ConsistencyBL="noerror_nowarning"
+		 RebalancingMode="RebalancingNotAllowed">
+			<wor:Job name="my job" workflowIdRef="WorkflowUser_TS over IP transcode">
+				<wor:ParamDesc value="2500000" name="Output video bitrate" />
+			</wor:Job>
+		</job:JobModifyReq>
+	</soapenv:Body>
+</soapenv:Envelope>
