@@ -1,6 +1,6 @@
-from Databasethomson import Database
+from setting.Databasethomson import Database
 from thomson_api import Job, JobDetail, Workflow
-from File import File
+from setting.File import File
 from setting import config as osDb
 import os
 import threading
@@ -14,7 +14,6 @@ class threadparam(threading.Thread):
     def __init__(self, job):
         super(threadparam, self).__init__()
         self.queue = Queue()
-        # self.daemon  = daem
         self.job = job
 
     def run(self):
@@ -60,7 +59,7 @@ def create_tbParam():
         print e
 
 def create_tbWorkflow():
-    sql= """create table workflow(wid nvarchar(50), name nvarchar(50), host nvarchar(20), pubver int unsigned, priver int unsigned);"""
+    sql= """create table workflow(wid varchar(50) CHARACTER SET utf8, name varchar(50) CHARACTER SET utf8, host nvarchar(20), pubver int unsigned, priver int unsigned);"""
     command = command_sql(sql)
     print "create table Workflow\n#####success#####"
     try:
@@ -75,7 +74,7 @@ def create_tbWorkflow():
 def insert_job(host=None):
     start = time.time()
     global strQuery
-    strQuery += "truncate job; insert into job (jid, host, state, status, prog, ver, startdate, enddate) values"
+    strQuery += "truncate job; LOCK TABLES job WRITE; insert into job (jid, host, state, status, prog, ver, startdate, enddate) values"
     response_xml = Job().get_job_xml()
     sql = Job().parse_xml_2_query(response_xml, host)[:-1]
     sql = strQuery + sql + ";\n commit"
@@ -95,7 +94,7 @@ def insert_param_thread(lstJid=None):
     start = time.time()
     lstJob = lstJid
     global strQuery
-    strQuery += "truncate job_param; insert into job_param(jid, host, name, wid) values "
+    strQuery += "truncate job_param; LOCK TABLES job_param WRITE; insert into job_param(jid, host, name, wid) values "
     for job in lstJob:
         mainQ.put(job)
         param = JobDetail(job['jid'], job['host'])
@@ -143,7 +142,7 @@ def get_lstJob_id():
 #insert workflow table
 def insert_workflow(host=None):
     start = time.time()
-    sql = "truncate workflow; insert into  workflow(wid, name, host, pubver, priver) values"
+    sql = "truncate workflow;LOCK TABLES workflow WRITE; insert into  workflow(wid, name, host, pubver, priver) values"
     response_xml = Workflow(host)
     sql += response_xml.parse_xml_2_query(response_xml.get_workflow())[:-1]+";\ncommit"
     # print sql
@@ -184,6 +183,7 @@ def main():
     insert_param_thread(get_lstJob_id())
     insert_workflow(osDb.THOMSON_HOST)
 if __name__ == '__main__':
+    # create_tbWorkflow()
     while True:
         main()
         time.sleep(1.5)
