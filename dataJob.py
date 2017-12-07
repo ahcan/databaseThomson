@@ -28,14 +28,16 @@ class threadparam(threading.Thread):
         self.queue.put(self.job.parse_xml_2_query(self.job.get_param()))
         self.queue.task_done()
 
-strQuery = ""
+# strQuery = ""
 mainQ = Queue()
 
 def thread_sql(jobDetail=None):
-    time.sleep(1)
-    global strQuery
-    strQuery += jobDetail.parse_xml_2_query(jobDetail.get_param())
-    mainQ.task_done()    
+    # global strQuery
+    # strQuery += jobDetail.parse_xml_2_query(jobDetail.get_param())
+    # print threading.currentThread().name
+    mainQ.put(jobDetail.parse_xml_2_query(jobDetail.get_param()))
+    # print strQuery
+    mainQ.task_done()   
 
 #################################
 #---------create table----------#
@@ -67,14 +69,13 @@ def create_tbWorkflow():
     except Exception as e:
         print e
 #################################
-#---------inaert table----------#
+#---------insert table----------#
 #################################
 
 #insert job table
 def insert_job(host=None):
     start = time.time()
-    global strQuery
-    strQuery += "truncate job; LOCK TABLES job WRITE; insert into job (jid, host, state, status, prog, ver, startdate, enddate) values"
+    strQuery = "truncate job; LOCK TABLES job WRITE; insert into job (jid, host, state, status, prog, ver, startdate, enddate) values"
     response_xml = Job().get_job_xml()
     sql = Job().parse_xml_2_query(response_xml, host)[:-1]
     sql = strQuery + sql + ";\n commit"
@@ -93,16 +94,18 @@ def insert_job(host=None):
 def insert_param_thread(lstJid=None):
     start = time.time()
     lstJob = lstJid
-    global strQuery
-    strQuery += "truncate job_param; LOCK TABLES job_param WRITE; insert into job_param(jid, host, name, wid) values "
+    strQuery = "truncate job_param; LOCK TABLES job_param WRITE; insert into job_param(jid, host, name, wid) values "
     for job in lstJob:
-        mainQ.put(job)
         param = JobDetail(job['jid'], job['host'])
         job = threading.Thread(target=thread_sql, kwargs={'jobDetail':param})
         job.daemon = True
         job.start()
     mainQ.join()
+    while not mainQ.empty():
+        strQuery += mainQ.get()
+    print strQuery
     sql = strQuery[:-1] + ";\ncommit"
+    # print sql
     command = command_sql(sql)
     try:
         os.system(command)
@@ -145,7 +148,7 @@ def insert_workflow(host=None):
     sql = "truncate workflow;LOCK TABLES workflow WRITE; insert into  workflow(wid, name, host, pubver, priver) values"
     response_xml = Workflow(host)
     sql += response_xml.parse_xml_2_query(response_xml.get_workflow())[:-1]+";\ncommit"
-    # print sql
+    print sql
     command = command_sql(sql)
     try:
         os.system(command)
@@ -179,7 +182,7 @@ def main():
     # for t in threads:
     #     t.join()
     insert_job(osDb.THOMSON_HOST)
-    time.sleep(0.02)
+    time.sleep(0.2)
     insert_param_thread(get_lstJob_id())
     insert_workflow(osDb.THOMSON_HOST)
 if __name__ == '__main__':
