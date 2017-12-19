@@ -1,3 +1,4 @@
+#-*- encoding: utf-8
 class File:
     def __init__(self, path):
         self.file_path = path

@@ -11,7 +11,7 @@ class Database:
         self.port = DATABASE_PORT
 
     def connect(self):
-        return mdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password, db=self.db)
+        return mdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password, db=self.db, charset='utf8')
 
     def close_connect(self, session):
         return session.close()

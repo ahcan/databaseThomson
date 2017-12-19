@@ -1,3 +1,4 @@
+#-*- encoding: utf-8
 from xml.dom import minidom
 import requests
 from requests.auth import HTTPDigestAuth
@@ -20,9 +21,10 @@ class Thomson:
         return response_xml
 
 class Job:
-    def __init__(self):
+    def __init__(self, host):
         from setting.xmlReq.JobReq import HEADERS
         self.headers = HEADERS
+        self.host = host
 
     def parse_dom_object(self, dom_object):
         str_tmp = str(dom_object.attributes.items())
@@ -36,15 +38,15 @@ class Job:
         EndDate = dom_object.attributes['EndDate'].value if "'EndDate'" in str_tmp else 'null'
         return State,Status,JId,Prog,StartDate,EndDate,Ver
 
-    def parse_xml_2_query(self, xml, host):
+    def parse_xml_2_query(self, xml):
         xmldoc = minidom.parseString(xml)
         itemlist = xmldoc.getElementsByTagName('jGetList:JItem')
         sql=''
         for s in itemlist:
             State,Status,JId,Prog,StartDate,EndDate,Ver = self.parse_dom_object(s)
             
-            sql += "(%d,'%s','%s','%s',%d,%d,%d,%d),"%(int(JId), host, State, Status, int(Prog), int(Ver), DateTime().conver_UTC_2_unix_timestamp(StartDate), DateTime().conver_UTC_2_unix_timestamp(EndDate)) 
-        return sql
+            sql += "(%d,'%s','%s','%s',%d,%d,%d,%d),"%(int(JId), self.host, State, Status, int(Prog), int(Ver), DateTime().conver_UTC_2_unix_timestamp(StartDate), DateTime().conver_UTC_2_unix_timestamp(EndDate)) 
+        return sql.encode('utf-8')
     
     def get_job_xml(self):
         from setting.xmlReq.JobReq import BODY
@@ -97,7 +99,7 @@ class Workflow:
     def parse_xml_2_query(self, xml):
         xmldoc = minidom.parseString(xml)
         itemlist = xmldoc.getElementsByTagName('wGetList:WItem')
-        sql =""
+        sql =''
         for s in itemlist:
             str_tmp = str(s.attributes.items())
             Name = s.attributes['Name'].value if "'Name'" in str_tmp else ''
