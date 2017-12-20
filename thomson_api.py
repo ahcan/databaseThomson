@@ -7,10 +7,10 @@ from setting.File import *
 from setting import config as osDb
 
 class Thomson:
-    def __init__(self):
-        self.user = osDb.THOMSON_USER
-        self.passwd = osDb.THOMSON_PASSWORD
-        self.url = osDb.THOMSON_URL
+    def __init__(self, host):
+        self.user = host['user']
+        self.passwd = host['passwd']
+        self.url = host['url']
 
     def get_response(self, headers, body):
         response = requests.post(self.url, data=body, headers=headers, \
@@ -45,13 +45,13 @@ class Job:
         for s in itemlist:
             State,Status,JId,Prog,StartDate,EndDate,Ver = self.parse_dom_object(s)
             
-            sql += "(%d,'%s','%s','%s',%d,%d,%d,%d),"%(int(JId), self.host, State, Status, int(Prog), int(Ver), DateTime().conver_UTC_2_unix_timestamp(StartDate), DateTime().conver_UTC_2_unix_timestamp(EndDate)) 
+            sql += "(%d,'%s','%s','%s',%d,%d,%d,%d),"%(int(JId), self.host['host'], State, Status, int(Prog), int(Ver), DateTime().conver_UTC_2_unix_timestamp(StartDate), DateTime().conver_UTC_2_unix_timestamp(EndDate)) 
         return sql.encode('utf-8')
     
     def get_job_xml(self):
         from setting.xmlReq.JobReq import BODY
         body = BODY
-        # response_xml = Thomson().get_response(self.headers, body)
+        # response_xml = Thomson(self.host).get_response(self.headers, body)
         response_xml = File('setting/').get_response('JobGetListRsp.xml')
         return response_xml
 
@@ -68,7 +68,7 @@ class JobDetail:
         self.host = host
     def get_param_xml(self):
         body = self.body.replace('JobID', str(self.jid))
-        # response_xml = Thomson().get_response(self.headers, body)
+        # response_xml = Thomson(self.host).get_response(self.headers, body)
         response_xml = File('setting/responseXml/').get_response('JobGetParamsRsp.xml')
         return response_xml
     def parse_xml_2_query(self, xml):
@@ -106,15 +106,59 @@ class Workflow:
             WId = s.attributes['WId'].value if "'WId'" in str_tmp else ''
             PubVer = s.attributes['PubVer'].value if "'PubVer'" in str_tmp else ''
             PriVer = s.attributes['PriVer'].value if "'PriVer'" in str_tmp else ''
-            sql += "('%s','%s','%s',%d,%d),"%(WId.encode('utf-8'), Name.encode('utf-8'), self.host, int(PubVer), int(PriVer))
+            sql += "('%s','%s','%s',%d,%d),"%(WId.encode('utf-8'), Name.encode('utf-8'), self.host['host'], int(PubVer), int(PriVer))
         return sql
 
     def get_workflow_xml(self):
         from setting.xmlReq.WorkflowReq import BODY
         body = BODY
-        # response_xml = Thomson().get_response(self.headers, body)
+        # response_xml = Thomson(self.host).get_response(self.headers, body)
         response_xml = File("setting/responseXml/").get_response('WorklowGetListRsp.xml')
         return response_xml
     def get_workflow(self):
         response_xml = self.get_workflow_xml()
         return response_xml
+
+######################################
+#------------Node--------------------#
+######################################
+class Node:
+    """docstring for Node"""
+    def __init__(self, host):
+            from setting.xmlReq import NodeReq
+            headers = NodeReq.HEADERS
+            body = NodeReq.BODY
+            self.headers = headers
+            self.body = body
+            self.host = host
+
+    def get_nodes_xml(self):
+        #response_xml = Thomson(self.host).get_response(self.headers, self.body)
+        response_xml = File('setting/responseXml/').get_response('SystemGetNodesStatsRsp.xml')
+        return response_xml
+
+    def parse_dom_object(self, dom_object):
+        text = str(dom_object.attributes.items())
+        NStatus = dom_object.attributes['NStatus'].value if "'NStatus'" in text else ''
+        Cpu = dom_object.attributes['Cpu'].value if "'Cpu'" in text else '-1'
+        AllocCpu = dom_object.attributes['AllocCpu'].value if "'AllocCpu'" in text else '-1'
+        Unreachable = dom_object.attributes['Unreachable'].value if "'Unreachable'" in text else ''
+        NId = dom_object.attributes['NId'].value if "'NId'" in text else '-1'
+        NState = dom_object.attributes['NState'].value if "'NState'" in text else ''
+        Mem =  dom_object.attributes['Mem'].value if "'Mem'" in text else '-1'
+        AllocMem = dom_object.attributes['AllocMem'].value if "'AllocMem'" in text else '-1'
+        return NStatus,Cpu,AllocCpu,Unreachable,NId,NState,Mem,AllocMem
+
+    def parse_xml_2_query(self, xml):
+        args = []
+        xmldoc = minidom.parseString(xml)
+        itemlist = xmldoc.getElementsByTagName('sGetNodesStats:RspSGNSOk')
+        sql = ''
+        for node in itemlist.item(0).childNodes:
+            NStatus,Cpu,AllocCpu,Unreachable,NId,NState,Mem,AllocMem = self.parse_dom_object(node)
+            sql += """(%d,'%s',%d,%d,%d,%d,'%s','%s','%s'),"""%(int(NId),self.host['host'],int(Cpu),int(AllocCpu),int(Mem),int(AllocMem),NStatus.encode('utf-8'),NState.encode('utf-8'),Unreachable.encode('utf-8'))
+        return sql
+
+    def get_node(self):
+        xml = self.get_nodes_xml()
+        return self.parse_xml_2_query(xml)
