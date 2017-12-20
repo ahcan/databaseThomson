@@ -68,7 +68,7 @@ def create_tbWorkflow():
         print e
 
 def create_tbNode():
-    sql = "create table node(nid int unsigned, host nvarchar(20), cpu int unsigned, alloccpu int unsigned, mem int unsigned, allocmem int unsigned, status char(10), state char(10), unreachable char(4))"
+    sql = "create table node(nid int unsigned, host nvarchar(20), cpu int unsigned, alloccpu int unsigned, mem int unsigned, allocmem int unsigned, status char(10), state char(10), unreachable char(5))"
     command = command_sql(sql)
     print "create table Node\n#####success#####"
     try:
@@ -110,6 +110,7 @@ def insert_param_thread(lstJid=None, host=None):
         job = threading.Thread(target=thread_sql, kwargs={'jobDetail':param})
         job.daemon = True
         job.start()
+        job.join()
     jobp_Q.join()
     print jobp_Q.qsize()
     print len(lstJob)
