@@ -68,9 +68,18 @@ def create_tbWorkflow():
         print e
 
 def create_tbNode():
-    sql = "create table node(nid int unsigned, host nvarchar(20), cpu int unsigned, alloccpu int unsigned, mem int unsigned, allocmem int unsigned, status char(10), state char(10), unreachable char(5))"
+    sql = "create table node(nid int unsigned, host nvarchar(20), cpu int unsigned, alloccpu int unsigned, mem int unsigned, allocmem int unsigned, status char(10), state char(10), uncreachable char(5));"
     command = command_sql(sql)
     print "create table Node\n#####success#####"
+    try:
+        os.system(command)
+    except Exception as e:
+        raise e
+
+def create_tbNodeDetail():
+    sql = "create table node_detail(nid int unsigned, host nvarchar(20), jid int unsigned);"
+    command = command_sql(sql)
+    print "create table Node Detail\n#####success#####"
     try:
         os.system(command)
     except Exception as e:
@@ -161,10 +170,12 @@ def insert_workflow(host=None):
 #insert node table
 def insert_node(host=None):
     start = time.time()
-    strQuery = "\ndelete from node where host = '%s'; insert into node(nid, host, cpu, alloccpu, mem, allocmem, status, state, unreachable) values"%(host['host'])
+    strQueryNode = "\ndelete from node where host = '%s'; insert into node(nid, host, cpu, alloccpu, mem, allocmem, status, state, uncreachable) values"%(host['host'])
+    strQueryDetail = "\ndelete from node_detail where host = '%s; insert into node_detail(nid, host, jid) values"%(host['host'])
     # response_xml = Node(host).get_job_xml()
-    sql = Node(host).get_node()[:-1]
-    sql = strQuery + sql + ";\ncommit;"
+    sql, sqlDetail = Node(host).get_node()
+    sql = strQueryNode + sql[:-1] + ";\ncommit;"
+    sqlDetail = strQueryDetail + sqlDetail[:-1]+";\ncommit;"
     # command = command_sql(sql)
     # try:
     #     os.system(command)
@@ -175,8 +186,14 @@ def insert_node(host=None):
     #     strQuery =''
     File('sql/').write_log("node.sql", sql)
     main_Q.put(sql)
+    main_Q.put(sqlDetail)
     main_Q.task_done()
     print ('End Node: ', time.time() - start)
+
+def insert_nodedetail(host=None):
+    start = time.time()
+    strQuery = "\ndelete from node_detail where host = '%s; insert into node_detail(nid, host, jid) values"%(host['host'])
+
 
 def command_sql(sql):
     return """mysql -u%s -p'%s' %s -h %s -e "%s" """%(osDb.DATABASE_USER, osDb.DATABASE_PASSWORD, osDb.DATABASE_NAME, osDb.DATABASE_HOST, sql)
@@ -184,14 +201,14 @@ def command_sql(sql):
 def main():
     list_Jobs = []
     for host in osDb.THOMSON_HOST:
-        thread_job = threading.Thread(target=insert_job, kwargs={'host':host})
-        list_Jobs.append(thread_job)
-        thread_workflow = threading.Thread(target=insert_workflow, kwargs={'host':host})
-        list_Jobs.append(thread_workflow)
+        # thread_job = threading.Thread(target=insert_job, kwargs={'host':host})
+        # list_Jobs.append(thread_job)
+        # thread_workflow = threading.Thread(target=insert_workflow, kwargs={'host':host})
+        # list_Jobs.append(thread_workflow)
         thread_node = threading.Thread(target=insert_node, kwargs={'host':host})
         list_Jobs.append(thread_node)
-        thread_param = threading.Thread(target=insert_param_thread, kwargs={'lstJid':get_lstJob_id(),'host':host})
-        list_Jobs.append(thread_param)
+        # thread_param = threading.Thread(target=insert_param_thread, kwargs={'lstJid':get_lstJob_id(),'host':host})
+        # list_Jobs.append(thread_param)
     for job in list_Jobs:
         job.daemon = True
         job.start()

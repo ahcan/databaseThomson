@@ -149,6 +149,11 @@ class Node:
         AllocMem = dom_object.attributes['AllocMem'].value if "'AllocMem'" in text else '-1'
         return NStatus,Cpu,AllocCpu,Unreachable,NId,NState,Mem,AllocMem
 
+    def parse_dom_object_nid(self, dom_object):
+        text = str(dom_object.attributes.items())
+        NId = dom_object.attributes['NId'].value if "'NId'" in text else '-1'
+        return NId
+
     def parse_xml_2_query(self, xml):
         args = []
         xmldoc = minidom.parseString(xml)
@@ -161,4 +166,46 @@ class Node:
 
     def get_node(self):
         xml = self.get_nodes_xml()
-        return self.parse_xml_2_query(xml)
+        # sql = 
+        return self.parse_xml_2_query(xml), self.parse_detail_2_query(xml)
+
+    def parse_detail_2_query(self, xml):
+        args = []
+        args_nodes = []
+        xmldoc = minidom.parseString(xml)
+        intemlist = xmldoc.getElementsByTagName('sGetNodesStats:RspSGNSOk')
+        sql = ''
+        for node in intemlist.item(0).childNodes:
+            nid = self.parse_dom_object_nid(node)
+            args.append(nid)
+            args_nodes.append({nid:node})
+        for nid in args:
+            # args_jid = []
+            # print args_nodes[args.index(nid)]
+            # args_jid.append(self.get_array_job_id(args_nodes[args.index(nid)],nid))
+            for jid in self.get_array_job_id(args_nodes[args.index(nid)],nid):
+                # print jid
+                sql +="""(%d,'%s',%d)"""%(int(nid), self.host, int(jid))
+        return sql
+
+    def get_array_job_id(self, dom_node, nid):
+        array_jid = []
+        dom_node = dom_node[nid]
+        for node_status_detail in dom_node.childNodes:
+            text = str(node_status_detail.attributes.items())
+            jid = node_status_detail.attributes['JId'].value if "'JId'" in text else ''
+            if jid:
+                array_jid.append(int(jid))
+        return array_jid
+
+    def get_dom_node(self, xml, nid):
+        dom_node = None
+        nodes_xml = xml
+        xmldoc = minidom.parseString(nodes_xml)
+        itemlist = xmldoc.getElementsByTagName('sGetNodesStats:RspSGNSOk')
+        for node in itemlist.item(0).childNodes:
+            text = str(node.attributes.items())
+            NId = node.attributes['NId'].value if "'NId'" in text else -1
+            if int(NId) == nid:
+                dom_node = node
+        return dom_node
