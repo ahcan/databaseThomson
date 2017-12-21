@@ -74,7 +74,7 @@ class JobDetail:
     def parse_xml_2_query(self, xml):
         xmldoc = minidom.parseString(xml)
         joblist = xmldoc.getElementsByTagName('wd:Job')
-	try:
+    	try:
             job = joblist[0]
             jobname = job.attributes['name'].value if "'name'" in str(job.attributes.items()) else ''
             workflowIdRef = job.attributes['workflowIdRef'].value if "'workflowIdRef'" in str(job.attributes.items()) else ''
@@ -185,7 +185,7 @@ class Node:
             # args_jid.append(self.get_array_job_id(args_nodes[args.index(nid)],nid))
             for jid in self.get_array_job_id(args_nodes[args.index(nid)],nid):
                 # print jid
-                sql +="""(%d,'%s',%d)"""%(int(nid), self.host, int(jid))
+                sql +="""(%d,'%s',%d),"""%(int(nid), self.host['host'], int(jid))
         return sql
 
     def get_array_job_id(self, dom_node, nid):

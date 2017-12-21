@@ -171,7 +171,7 @@ def insert_workflow(host=None):
 def insert_node(host=None):
     start = time.time()
     strQueryNode = "\ndelete from node where host = '%s'; insert into node(nid, host, cpu, alloccpu, mem, allocmem, status, state, uncreachable) values"%(host['host'])
-    strQueryDetail = "\ndelete from node_detail where host = '%s; insert into node_detail(nid, host, jid) values"%(host['host'])
+    strQueryDetail = "\ndelete from node_detail where host = '%s'; insert into node_detail(nid, host, jid) values"%(host['host'])
     # response_xml = Node(host).get_job_xml()
     sql, sqlDetail = Node(host).get_node()
     sql = strQueryNode + sql[:-1] + ";\ncommit;"
@@ -186,6 +186,7 @@ def insert_node(host=None):
     #     strQuery =''
     File('sql/').write_log("node.sql", sql)
     main_Q.put(sql)
+    main_Q.task_done()
     main_Q.put(sqlDetail)
     main_Q.task_done()
     print ('End Node: ', time.time() - start)
@@ -201,14 +202,14 @@ def command_sql(sql):
 def main():
     list_Jobs = []
     for host in osDb.THOMSON_HOST:
-        # thread_job = threading.Thread(target=insert_job, kwargs={'host':host})
-        # list_Jobs.append(thread_job)
-        # thread_workflow = threading.Thread(target=insert_workflow, kwargs={'host':host})
-        # list_Jobs.append(thread_workflow)
+        thread_job = threading.Thread(target=insert_job, kwargs={'host':host})
+        list_Jobs.append(thread_job)
+        thread_workflow = threading.Thread(target=insert_workflow, kwargs={'host':host})
+        list_Jobs.append(thread_workflow)
         thread_node = threading.Thread(target=insert_node, kwargs={'host':host})
         list_Jobs.append(thread_node)
-        # thread_param = threading.Thread(target=insert_param_thread, kwargs={'lstJid':get_lstJob_id(),'host':host})
-        # list_Jobs.append(thread_param)
+        thread_param = threading.Thread(target=insert_param_thread, kwargs={'lstJid':get_lstJob_id(),'host':host})
+        list_Jobs.append(thread_param)
     for job in list_Jobs:
         job.daemon = True
         job.start()
@@ -220,6 +221,7 @@ def main():
         tmp= main_Q.get()
         os.system(command_sql(tmp))
         strQuery +=tmp
+        # print tmp
     start = time.time()
     File("sql/").write_log("all.sql", strQuery)
     # command = command_sql(strQuery)
