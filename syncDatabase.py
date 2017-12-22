@@ -96,23 +96,16 @@ def insert_job(host=None):
     response_xml = Job(host).get_job_xml()
     sql = Job(host).parse_xml_2_query(response_xml)[:-1]
     sql = strQuery + sql + ";\n commit;"
-    # command = command_sql(sql)
-    # try:
-    #     os.system(command)
-    #     print "insert table job\n#####success#####"
-    # except Exception as e:
-    #     raise e
-    # finally:
-    #     strQuery =''
     File('sql/').write_log("job.sql", sql)
     main_Q.put(sql)
     main_Q.task_done()
     print ('End Job: ', time.time() - start)
 
 #insert param table
-def insert_param_thread(lstJid=None, host=None):
+def insert_param_thread(host=None):
+    # time.sleep(2)
     start = time.time()
-    lstJob = lstJid
+    lstJob = get_lstJob_id(host)
     strQuery = "\ndelete from job_param where host = '%s'; insert into job_param(jid, host, name, wid) values "%(host['host'])
     for job in lstJob:
         param = JobDetail(job['jid'], job['host'])
@@ -147,14 +140,20 @@ def insert_param(lstJid):
     File("sql/").write_log("param_log.sql", sql)
 
 #array list jid
-def get_lstJob_id():
-    db = Database()
-    sql = """select jid, host from job;"""
-    lstJob = db.execute_query(sql)
-    args = []
-    for job in lstJob:
-        args.append({'jid'      :job[0], 'host'     :job[1]})
-    return args
+def get_lstJob_id(host):
+    # db = Database()
+    # sql = """select jid, host from job;"""
+    # lstJob = db.execute_query(sql)
+    # args = []
+    # while not lstJob:
+    #     lstJob = db.execute_query(sql)
+    #     print lstJob
+    # for job in lstJob:
+    #     args.append({'jid'      :job[0], 'host'     :job[1]})
+    # return args
+    response_xml = Job(host).get_job_xml()
+    return Job(host).count_job(response_xml)
+
 
 #insert workflow table
 def insert_workflow(host=None):
@@ -208,7 +207,7 @@ def main():
         list_Jobs.append(thread_workflow)
         thread_node = threading.Thread(target=insert_node, kwargs={'host':host})
         list_Jobs.append(thread_node)
-        thread_param = threading.Thread(target=insert_param_thread, kwargs={'lstJid':get_lstJob_id(),'host':host})
+        thread_param = threading.Thread(target=insert_param_thread, kwargs={'host':host})
         list_Jobs.append(thread_param)
     for job in list_Jobs:
         job.daemon = True

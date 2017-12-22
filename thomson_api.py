@@ -55,6 +55,15 @@ class Job:
         response_xml = File('setting/').get_response('JobGetListRsp.xml')
         return response_xml
 
+    def count_job(self, xml):
+        xmldoc = minidom.parseString(xml)
+        itemlist = xmldoc.getElementsByTagName('jGetList:JItem')
+        args = []
+        for item in itemlist:
+            State,Status,JId,Prog,StartDate,EndDate,Ver = self.parse_dom_object(item)
+            args.append({'jid':JId,'host': self.host['host']})
+        return args
+
 
 ######################################
 #-----------Job Detail---------------#
