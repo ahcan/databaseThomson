@@ -120,7 +120,7 @@ def insert_param_thread(host=None):
         strQuery += jobp_Q.get()
     sql = strQuery[:-1] + ";\ncommit;"
     File("sql/").write_log("param_job.sql", sql)
-    main_Q.put(sql.encode('utf-8'))
+    main_Q.put(sql)
     main_Q.task_done()
     print ('End job_param: ', time.time() - start)
 
@@ -207,8 +207,6 @@ def main():
         list_Jobs.append(thread_workflow)
         thread_node = threading.Thread(target=insert_node, kwargs={'host':host})
         list_Jobs.append(thread_node)
-        thread_param = threading.Thread(target=insert_param_thread, kwargs={'host':host})
-        list_Jobs.append(thread_param)
     for job in list_Jobs:
         job.daemon = True
         job.start()

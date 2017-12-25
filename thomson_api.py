@@ -61,7 +61,7 @@ class Job:
         args = []
         for item in itemlist:
             State,Status,JId,Prog,StartDate,EndDate,Ver = self.parse_dom_object(item)
-            args.append({'jid':JId,'host': self.host['host']})
+            args.append({'jid':JId,'host': self.host})
         return args
 
 
@@ -87,7 +87,7 @@ class JobDetail:
             job = joblist[0]
             jobname = job.attributes['name'].value if "'name'" in str(job.attributes.items()) else ''
             workflowIdRef = job.attributes['workflowIdRef'].value if "'workflowIdRef'" in str(job.attributes.items()) else ''
-            return """(%d, '%s', '%s', '%s'),"""%(int(self.jid), self.host, jobname.encode('utf-8'), workflowIdRef.encode('utf-8'))
+            return """(%d, '%s', '%s', '%s'),"""%(int(self.jid), self.host['host'], jobname.encode('utf-8'), workflowIdRef.encode('utf-8'))
         except Exception as e:
             print e
             return ""
