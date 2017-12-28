@@ -1,7 +1,6 @@
 #!/bin/sh
 while true
 do
-    /usr/bin/python /home/huy/syncDatabase/syncDatabase.py 
-    /usr/bin/python /home/huy/syncDatabase/syncJobparam.py
+    /usr/bin/python /web/syncDatabase_thomson/syncDatabase.py
     sleep 1s
 done
