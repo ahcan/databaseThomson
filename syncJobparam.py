@@ -24,7 +24,7 @@ def insert_param_thread(host=None):
     # time.sleep(2)
     start = time.time()
     lstJob = get_lstJob_id(host)
-    strQuery = "\ndelete from job_param where host = '%s'; insert into job_param(jid, host, name, wid) values "%(host['host'])
+    strQuery = "insert into job_param(jid, host, name, wid) values "
     for job in lstJob:
         param = JobDetail(job['jid'], job['host'])
         job = threading.Thread(target=thread_sql, kwargs={'jobDetail':param})
@@ -56,15 +56,15 @@ def main():
         thread_param.start()
         thread_param.join()
     main_Q.join()
-    strQuery = ''
+    strQuery = 'truncate job_param;alter table job_param auto_increment = 1;\n'
     while not main_Q.empty():
         # print strQuery
         tmp= main_Q.get()
-        os.system(command_sql(tmp))
         strQuery +=tmp
         # print tmp
+    os.system(command_sql(strQuery))
     start = time.time()
-    File("sql/").write_log("all.sql", strQuery)
+    File("sql/").write_log("all-param.sql", strQuery)
     print ('End-inser-param', time.time() - start)
 
 # def mai():

@@ -41,7 +41,7 @@ def thread_sql(jobDetail=None):
 #---------create table----------#
 #################################
 def create_tbJob():
-    sql = "create table job(jid int, host nvarchar(20), state char(10), status char(10), prog int unsigned, ver int unsigned, startdate int unsigned, enddate int unsigned);"
+    sql = "create table job(jid int unsigned, host nvarchar(20), state char(10), status char(10), prog int unsigned, ver int unsigned, startdate int unsigned, enddate int unsigned);"
     command = command_sql(sql)
     try:
         os.system(command)
@@ -92,7 +92,7 @@ def create_tbNodeDetail():
 #insert job table
 def insert_job(host=None):
     start = time.time()
-    strQuery = "\ndelete from job where host = '%s'; insert into job (jid, host, state, status, prog, ver, startdate, enddate) values"%(host['host'])
+    strQuery = "insert into job (jid, host, state, status, prog, ver, startdate, enddate) values"
     response_xml = Job(host).get_job_xml()
     sql = Job(host).parse_xml_2_query(response_xml)[:-1]
     sql = strQuery + sql + ";\n commit;"
@@ -106,7 +106,7 @@ def insert_param_thread(host=None):
     # time.sleep(2)
     start = time.time()
     lstJob = get_lstJob_id(host)
-    strQuery = "\ndelete from job_param where host = '%s'; insert into job_param(jid, host, name, wid) values "%(host['host'])
+    strQuery = "delete from job_param where host = '%s';ALTER TABLE job AUTO_INCREMENT = 1; insert into job_param(jid, host, name, wid) values "%(host['host'])
     for job in lstJob:
         param = JobDetail(job['jid'], job['host'])
         job = threading.Thread(target=thread_sql, kwargs={'jobDetail':param})
@@ -158,7 +158,7 @@ def get_lstJob_id(host):
 #insert workflow table
 def insert_workflow(host=None):
     start = time.time()
-    sql = "\ndelete from workflow where host = '%s'; insert into  workflow(wid, name, host, pubver, priver) values"%(host['host'])
+    sql = "insert into  workflow(wid, name, host, pubver, priver) values"
     response_xml = Workflow(host)
     sql += response_xml.parse_xml_2_query(response_xml.get_workflow())[:-1]+";\ncommit;"
     File("sql/").write_log("workflow.sql", sql)
@@ -169,8 +169,8 @@ def insert_workflow(host=None):
 #insert node table
 def insert_node(host=None):
     start = time.time()
-    strQueryNode = "\ndelete from node where host = '%s'; insert into node(nid, host, cpu, alloccpu, mem, allocmem, status, state, uncreachable) values"%(host['host'])
-    strQueryDetail = "\ndelete from node_detail where host = '%s'; insert into node_detail(nid, host, jid) values"%(host['host'])
+    strQueryNode = "insert into node(nid, host, cpu, alloccpu, mem, allocmem, status, state, uncreachable) values"
+    strQueryDetail = "insert into node_detail(nid, host, jid) values"
     # response_xml = Node(host).get_job_xml()
     sql, sqlDetail = Node(host).get_node()
     sql = strQueryNode + sql[:-1] + ";\ncommit;"
@@ -190,11 +190,6 @@ def insert_node(host=None):
     main_Q.task_done()
     print ('End Node: ', time.time() - start)
 
-def insert_nodedetail(host=None):
-    start = time.time()
-    strQuery = "\ndelete from node_detail where host = '%s; insert into node_detail(nid, host, jid) values"%(host['host'])
-
-
 def command_sql(sql):
     return """mysql -u%s -p'%s' %s -h %s -e "%s" """%(osDb.DATABASE_USER, osDb.DATABASE_PASSWORD, osDb.DATABASE_NAME, osDb.DATABASE_HOST, sql)
 
@@ -212,13 +207,14 @@ def main():
         job.start()
         job.join()
     main_Q.join()
-    strQuery = ''
+    strQuery = 'truncate job; truncate workflow; truncate node; truncate node_detail; alter table job auto_increment = 1;\
+     alter table workflow auto_increment = 1; alter table node auto_increment = 1; alter table node_detail auto_increment = 1;\n'
     while not main_Q.empty():
         # print strQuery
         tmp= main_Q.get()
-        os.system(command_sql(tmp))
         strQuery +=tmp
         # print tmp
+    os.system(command_sql(strQuery))
     start = time.time()
     File("sql/").write_log("all.sql", strQuery)
     # command = command_sql(strQuery)
