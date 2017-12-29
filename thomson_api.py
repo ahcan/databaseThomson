@@ -51,8 +51,8 @@ class Job:
     def get_job_xml(self):
         from setting.xmlReq.JobReq import BODY
         body = BODY
-        # response_xml = Thomson(self.host).get_response(self.headers, body)
-        response_xml = File('setting/').get_response('JobGetListRsp.xml')
+        response_xml = Thomson(self.host).get_response(self.headers, body)
+        #response_xml = File('setting/').get_response('JobGetListRsp.xml')
         return response_xml
 
     def count_job(self, xml):
@@ -77,8 +77,8 @@ class JobDetail:
         self.host = host
     def get_param_xml(self):
         body = self.body.replace('JobID', str(self.jid))
-        # response_xml = Thomson(self.host).get_response(self.headers, body)
-        response_xml = File('setting/responseXml/').get_response('JobGetParamsRsp.xml')
+        response_xml = Thomson(self.host).get_response(self.headers, body)
+        #response_xml = File('setting/responseXml/').get_response('JobGetParamsRsp.xml')
         return response_xml
     def parse_xml_2_query(self, xml):
         xmldoc = minidom.parseString(xml)
@@ -121,8 +121,8 @@ class Workflow:
     def get_workflow_xml(self):
         from setting.xmlReq.WorkflowReq import BODY
         body = BODY
-        # response_xml = Thomson(self.host).get_response(self.headers, body)
-        response_xml = File("setting/responseXml/").get_response('WorklowGetListRsp.xml')
+        response_xml = Thomson(self.host).get_response(self.headers, body)
+        #response_xml = File("setting/responseXml/").get_response('WorklowGetListRsp.xml')
         return response_xml
     def get_workflow(self):
         response_xml = self.get_workflow_xml()
@@ -142,8 +142,8 @@ class Node:
             self.host = host
 
     def get_nodes_xml(self):
-        #response_xml = Thomson(self.host).get_response(self.headers, self.body)
-        response_xml = File('setting/responseXml/').get_response('SystemGetNodesStatsRsp.xml')
+        response_xml = Thomson(self.host).get_response(self.headers, self.body)
+        #response_xml = File('setting/responseXml/').get_response('SystemGetNodesStatsRsp.xml')
         return response_xml
 
     def parse_dom_object(self, dom_object):
