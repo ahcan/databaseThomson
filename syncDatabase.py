@@ -50,7 +50,7 @@ def create_tbJob():
         raise e
 
 def create_tbParam():
-    sql = "create table job_param(jid int unsigned, host nvarchar(20), name nvarchar(50), wid nvarchar(50));"
+    sql = "create table job_param(jid int unsigned, host nvarchar(20), name nvarchar(50), wid nvarchar(50), backup nvarchar(5));"
     command = command_sql(sql)
     try:
         os.system(command)

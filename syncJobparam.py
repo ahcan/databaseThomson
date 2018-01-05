@@ -24,7 +24,7 @@ def insert_param_thread(host=None):
     # time.sleep(2)
     start = time.time()
     lstJob = get_lstJob_id(host)
-    strQuery = "insert into job_param(jid, host, name, wid) values "
+    strQuery = "insert into job_param(jid, host, name, wid, backup) values "
     for job in lstJob:
         param = JobDetail(job['jid'], job['host'])
         job = threading.Thread(target=thread_sql, kwargs={'jobDetail':param})

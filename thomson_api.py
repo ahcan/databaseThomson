@@ -51,8 +51,8 @@ class Job:
     def get_job_xml(self):
         from setting.xmlReq.JobReq import BODY
         body = BODY
-        response_xml = Thomson(self.host).get_response(self.headers, body)
-        #response_xml = File('setting/').get_response('JobGetListRsp.xml')
+        #response_xml = Thomson(self.host).get_response(self.headers, body)
+        response_xml = File('setting/').get_response('JobGetListRsp.xml')
         return response_xml
 
     def count_job(self, xml):
@@ -77,19 +77,26 @@ class JobDetail:
         self.host = host
     def get_param_xml(self):
         body = self.body.replace('JobID', str(self.jid))
-        response_xml = Thomson(self.host).get_response(self.headers, body)
-        #response_xml = File('setting/responseXml/').get_response('JobGetParamsRsp.xml')
+        #response_xml = Thomson(self.host).get_response(self.headers, body)
+        response_xml = File('setting/responseXml/').get_response('JobGetParamsRsp.xml')
         return response_xml
     def parse_xml_2_query(self, xml):
         xmldoc = minidom.parseString(xml)
         joblist = xmldoc.getElementsByTagName('wd:Job')
+        # get cac node param
+        lst = joblist.item(0).getElementsByTagName('wd:ParamDesc')
+        for item in lst:
+            tmp = item.attributes['name'].value
+            if tmp == 'Define backup input':
+                backup = item.attributes['value'].value
+                break
     	try:
             job = joblist[0]
             jobname = job.attributes['name'].value if "'name'" in str(job.attributes.items()) else ''
             workflowIdRef = job.attributes['workflowIdRef'].value if "'workflowIdRef'" in str(job.attributes.items()) else ''
-            return """(%d, '%s', '%s', '%s'),"""%(int(self.jid), self.host['host'], jobname.encode('utf-8'), workflowIdRef.encode('utf-8'))
+            return """(%d, '%s', '%s', '%s', '%s'),"""%(int(self.jid), self.host['host'], jobname.encode('utf-8'), workflowIdRef.encode('utf-8'), backup)
         except Exception as e:
-            print e
+            print('error query JobDetail')
             return ""
 
     def get_param(self):
@@ -121,8 +128,8 @@ class Workflow:
     def get_workflow_xml(self):
         from setting.xmlReq.WorkflowReq import BODY
         body = BODY
-        response_xml = Thomson(self.host).get_response(self.headers, body)
-        #response_xml = File("setting/responseXml/").get_response('WorklowGetListRsp.xml')
+        #response_xml = Thomson(self.host).get_response(self.headers, body)
+        response_xml = File("setting/responseXml/").get_response('WorklowGetListRsp.xml')
         return response_xml
     def get_workflow(self):
         response_xml = self.get_workflow_xml()
@@ -142,8 +149,8 @@ class Node:
             self.host = host
 
     def get_nodes_xml(self):
-        response_xml = Thomson(self.host).get_response(self.headers, self.body)
-        #response_xml = File('setting/responseXml/').get_response('SystemGetNodesStatsRsp.xml')
+        #response_xml = Thomson(self.host).get_response(self.headers, self.body)
+        response_xml = File('setting/responseXml/').get_response('SystemGetNodesStatsRsp.xml')
         return response_xml
 
     def parse_dom_object(self, dom_object):
