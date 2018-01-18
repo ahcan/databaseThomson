@@ -196,9 +196,6 @@ class Node:
             args.append(nid)
             args_nodes.append({nid:node})
         for nid in args:
-            # args_jid = []
-            # print args_nodes[args.index(nid)]
-            # args_jid.append(self.get_array_job_id(args_nodes[args.index(nid)],nid))
             for jid in self.get_array_job_id(args_nodes[args.index(nid)],nid):
                 # print jid
                 sql +="""(%d,'%s',%d),"""%(int(nid), self.host['host'], int(jid))
