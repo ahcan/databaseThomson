@@ -95,7 +95,7 @@ def insert_job(host=None):
     strQuery = "insert into job (jid, host, state, status, prog, ver, startdate, enddate) values"
     response_xml = Job(host).get_job_xml()
     sql = Job(host).parse_xml_2_query(response_xml)[:-1]
-    sql = strQuery + sql + ";\n commit;"
+    sql = strQuery + sql + ";commit;"
     File('sql/').write_log("job.sql", sql)
     main_Q.put(sql)
     main_Q.task_done()
@@ -118,7 +118,7 @@ def insert_param_thread(host=None):
     print len(lstJob)
     while not jobp_Q.empty():
         strQuery += jobp_Q.get()
-    sql = strQuery[:-1] + ";\ncommit;"
+    sql = strQuery[:-1] + ";commit;"
     File("sql/").write_log("param_job.sql", sql)
     main_Q.put(sql)
     main_Q.task_done()
@@ -160,7 +160,8 @@ def insert_workflow(host=None):
     start = time.time()
     sql = "insert into  workflow(wid, name, host, pubver, priver) values"
     response_xml = Workflow(host)
-    sql += response_xml.parse_xml_2_query(response_xml.get_workflow())[:-1]+";\ncommit;"
+    sql += response_xml.parse_xml_2_query(response_xml.get_workflow())[:-1]+";commit;"
+    sql = sql
     File("sql/").write_log("workflow.sql", sql)
     main_Q.put(sql)
     main_Q.task_done()
@@ -173,8 +174,8 @@ def insert_node(host=None):
     strQueryDetail = "insert into node_detail(nid, host, jid) values"
     # response_xml = Node(host).get_job_xml()
     sql, sqlDetail = Node(host).get_node()
-    sql = strQueryNode + sql[:-1] + ";\ncommit;"
-    sqlDetail = strQueryDetail + sqlDetail[:-1]+";\ncommit;"
+    sql = strQueryNode + sql[:-1] + ";commit;"
+    sqlDetail = strQueryDetail + sqlDetail[:-1]+";commit;"
     # command = command_sql(sql)
     # try:
     #     os.system(command)
@@ -183,6 +184,8 @@ def insert_node(host=None):
     #     raise e
     # finally:
     #     strQuery =''
+    sql = sql
+    sqlDetail = sqlDetail
     File('sql/').write_log("node.sql", sql)
     main_Q.put(sql)
     main_Q.task_done()
@@ -191,7 +194,9 @@ def insert_node(host=None):
     print ('End Node: ', time.time() - start)
 
 def command_sql(sql):
-    return """mysql -u%s -p'%s' %s -h %s -e "%s" """%(osDb.DATABASE_USER, osDb.DATABASE_PASSWORD, osDb.DATABASE_NAME, osDb.DATABASE_HOST, sql)
+    #File("sql/").write_log("all.sql", unicode(sql,'utf-8'))
+    #print (sql)
+    return """mysql --default-character-set=utf8 -u%s -p'%s' %s -h %s -e "%s" """%(osDb.DATABASE_USER, osDb.DATABASE_PASSWORD, osDb.DATABASE_NAME, osDb.DATABASE_HOST,sql)
 
 def main():
     list_Jobs = []
@@ -207,14 +212,18 @@ def main():
         job.start()
         job.join()
     main_Q.join()
-    strQuery = 'truncate job; truncate workflow; truncate node; truncate node_detail; alter table job auto_increment = 1;\
-     alter table workflow auto_increment = 1; alter table node auto_increment = 1; alter table node_detail auto_increment = 1;\n'
+    strQuery = "truncate job; truncate workflow; truncate node; truncate node_detail; alter table job auto_increment = 1;\
+     alter table workflow auto_increment = 1; alter table node auto_increment = 1; alter table node_detail auto_increment = 1;"
+    #strQuery=''
     while not main_Q.empty():
         # print strQuery
         tmp= main_Q.get()
         strQuery +=tmp
         # print tmp
-    os.system(command_sql(strQuery))
+        #os.system(command_sql(tmp))
+        #print tmp
+    #strQuery = unicode(strQuery,'utf-8')
+    os.system(command_sql(strQuery.encode('utf-8')))
     start = time.time()
     File("sql/").write_log("all.sql", strQuery)
     # command = command_sql(strQuery)

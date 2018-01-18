@@ -1,9 +1,9 @@
 #Database
 DATABASE_NAME = 'thomson'
-# DATABASE_USER = 'thomson'
-DATABASE_USER = 'root'
-# DATABASE_PASSWORD = 'thomson@$@'
-DATABASE_PASSWORD = 'root'
+DATABASE_USER = 'thomson'
+#DATABASE_USER = 'root'
+DATABASE_PASSWORD = 'thomson@$@'
+#DATABASE_PASSWORD = 'root'
 DATABASE_HOST = 'localhost'
 DATABASE_PORT = 3306
 #Thomson

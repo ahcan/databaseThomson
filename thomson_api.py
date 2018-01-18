@@ -1,4 +1,4 @@
-#-*- encoding: utf-8
+# -*- coding: utf-8 -*-
 from xml.dom import minidom
 import requests
 from requests.auth import HTTPDigestAuth
@@ -46,13 +46,13 @@ class Job:
             State,Status,JId,Prog,StartDate,EndDate,Ver = self.parse_dom_object(s)
             
             sql += "(%d,'%s','%s','%s',%d,%d,%d,%d),"%(int(JId), self.host['host'], State, Status, int(Prog), int(Ver), DateTime().conver_UTC_2_unix_timestamp(StartDate), DateTime().conver_UTC_2_unix_timestamp(EndDate)) 
-        return sql.encode('utf-8')
+        return sql
     
     def get_job_xml(self):
         from setting.xmlReq.JobReq import BODY
         body = BODY
-        #response_xml = Thomson(self.host).get_response(self.headers, body)
-        response_xml = File('setting/').get_response('JobGetListRsp.xml')
+        response_xml = Thomson(self.host).get_response(self.headers, body)
+        #response_xml = File('setting/').get_response('JobGetListRsp.xml')
         return response_xml
 
     def count_job(self, xml):
@@ -77,26 +77,29 @@ class JobDetail:
         self.host = host
     def get_param_xml(self):
         body = self.body.replace('JobID', str(self.jid))
-        #response_xml = Thomson(self.host).get_response(self.headers, body)
-        response_xml = File('setting/responseXml/').get_response('JobGetParamsRsp.xml')
+        response_xml = Thomson(self.host).get_response(self.headers, body)
+        #response_xml = File('setting/responseXml/').get_response('JobGetParamsRsp.xml')
         return response_xml
     def parse_xml_2_query(self, xml):
         xmldoc = minidom.parseString(xml)
         joblist = xmldoc.getElementsByTagName('wd:Job')
         # get cac node param
         lst = joblist.item(0).getElementsByTagName('wd:ParamDesc')
+        backup = 'false'
         for item in lst:
             tmp = item.attributes['name'].value
             if tmp == 'Define backup input':
-                backup = item.attributes['value'].value
+                backup = item.attributes['value'].value if "'value'" in str(item.attributes.items()) else ''
                 break
     	try:
             job = joblist[0]
             jobname = job.attributes['name'].value if "'name'" in str(job.attributes.items()) else ''
             workflowIdRef = job.attributes['workflowIdRef'].value if "'workflowIdRef'" in str(job.attributes.items()) else ''
-            return """(%d, '%s', '%s', '%s', '%s'),"""%(int(self.jid), self.host['host'], jobname.encode('utf-8'), workflowIdRef.encode('utf-8'), backup)
+            #print "#####################"
+            return """(%d, '%s', '%s', '%s', '%s'),"""%(int(self.jid), self.host['host'], jobname, workflowIdRef, backup)
         except Exception as e:
-            print('error query JobDetail')
+            #print('error query JobDetail')
+            print e
             return ""
 
     def get_param(self):
@@ -122,14 +125,14 @@ class Workflow:
             WId = s.attributes['WId'].value if "'WId'" in str_tmp else ''
             PubVer = s.attributes['PubVer'].value if "'PubVer'" in str_tmp else ''
             PriVer = s.attributes['PriVer'].value if "'PriVer'" in str_tmp else ''
-            sql += "('%s','%s','%s',%d,%d),"%(WId.encode('utf-8'), Name.encode('utf-8'), self.host['host'], int(PubVer), int(PriVer))
+            sql += "('%s','%s','%s',%d,%d),"%(WId, Name, self.host['host'], int(PubVer), int(PriVer))
         return sql
 
     def get_workflow_xml(self):
         from setting.xmlReq.WorkflowReq import BODY
         body = BODY
-        #response_xml = Thomson(self.host).get_response(self.headers, body)
-        response_xml = File("setting/responseXml/").get_response('WorklowGetListRsp.xml')
+        response_xml = Thomson(self.host).get_response(self.headers, body)
+        #response_xml = File("setting/responseXml/").get_response('WorklowGetListRsp.xml')
         return response_xml
     def get_workflow(self):
         response_xml = self.get_workflow_xml()
@@ -149,8 +152,8 @@ class Node:
             self.host = host
 
     def get_nodes_xml(self):
-        #response_xml = Thomson(self.host).get_response(self.headers, self.body)
-        response_xml = File('setting/responseXml/').get_response('SystemGetNodesStatsRsp.xml')
+        response_xml = Thomson(self.host).get_response(self.headers, self.body)
+        #response_xml = File('setting/responseXml/').get_response('SystemGetNodesStatsRsp.xml')
         return response_xml
 
     def parse_dom_object(self, dom_object):
@@ -177,7 +180,7 @@ class Node:
         sql = ''
         for node in itemlist.item(0).childNodes:
             NStatus,Cpu,AllocCpu,Unreachable,NId,NState,Mem,AllocMem = self.parse_dom_object(node)
-            sql += """(%d,'%s',%d,%d,%d,%d,'%s','%s','%s'),"""%(int(NId),self.host['host'],int(Cpu),int(AllocCpu),int(Mem),int(AllocMem),NStatus.encode('utf-8'),NState.encode('utf-8'),Unreachable.encode('utf-8'))
+            sql += """(%d,'%s',%d,%d,%d,%d,'%s','%s','%s'),"""%(int(NId),self.host['host'],int(Cpu),int(AllocCpu),int(Mem),int(AllocMem),NStatus,NState,Unreachable)
         return sql
 
     def get_node(self):

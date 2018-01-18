@@ -1,4 +1,5 @@
 #-*- encoding: utf-8
+import io
 class File:
     def __init__(self, path):
         self.file_path = path
@@ -21,6 +22,6 @@ class File:
         return response
 
     def write_log(self, filename, content):
-        f = open(self.file_path + filename, 'w')
+        f = io.open(self.file_path + filename, 'w')
         f.write(content)
         f.close()

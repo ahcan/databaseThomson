@@ -1,4 +1,4 @@
-#-*- encoding: utf-8
+#-*- coding: utf-8
 from setting.Databasethomson import Database
 from thomson_api import Job, JobDetail, Workflow, Node
 from setting.File import File
@@ -24,6 +24,7 @@ def insert_param_thread(host=None):
     # time.sleep(2)
     start = time.time()
     lstJob = get_lstJob_id(host)
+    print len(lstJob)
     strQuery = "insert into job_param(jid, host, name, wid, backup) values "
     for job in lstJob:
         param = JobDetail(job['jid'], job['host'])
@@ -33,10 +34,9 @@ def insert_param_thread(host=None):
         job.join()
     jobp_Q.join()
     print jobp_Q.qsize()
-    print len(lstJob)
     while not jobp_Q.empty():
         strQuery += jobp_Q.get()
-    sql = strQuery[:-1] + ";\ncommit;"
+    sql = strQuery[:-1] + ";commit;"
     File("sql/").write_log("param_job.sql", sql)
     main_Q.put(sql)
     main_Q.task_done()
@@ -56,13 +56,14 @@ def main():
         thread_param.start()
         thread_param.join()
     main_Q.join()
-    strQuery = 'truncate job_param;alter table job_param auto_increment = 1;\n'
+    strQuery = 'truncate job_param;alter table job_param auto_increment = 1;'
     while not main_Q.empty():
         # print strQuery
         tmp= main_Q.get()
         strQuery +=tmp
-        # print tmp
-    os.system(command_sql(strQuery))
+        #print tmp
+       # os.system(command_sql(tmp))
+    os.system(command_sql(strQuery.encode('utf-8')))
     start = time.time()
     File("sql/").write_log("all-param.sql", strQuery)
     print ('End-inser-param', time.time() - start)
