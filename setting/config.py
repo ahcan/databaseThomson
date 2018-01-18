@@ -13,10 +13,16 @@ DATABASE_PORT = 3306
 # THOMSON_URL = 'http://%s/services/Maltese'%(THOMSON_HOST)
 THOMSON_HOST=[
     {
-        'user' : 'nguyennt9',
+        'user' : 'iptv_tool',
         'passwd' : '123456',
         'host'  :   '172.29.3.189',
         'url' : 'http://%s/services/Maltese' % ('172.29.3.189'),
+    },
+    {
+        'user' : 'iptv_tool',
+        'passwd' : '123456',
+        'host'  :   '172.29.70.189',
+        'url' : 'http://%s/services/Maltese' % ('172.29.70.189'),
     },
     {
         'user' : 'iptv_tool',
