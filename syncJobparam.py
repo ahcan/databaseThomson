@@ -1,4 +1,4 @@
-#-*- coding: utf-8
+#-*- encoding: utf-8
 from setting.Databasethomson import Database
 from thomson_api import Job, JobDetail, Workflow, Node
 from setting.File import File
@@ -8,67 +8,66 @@ import threading
 from Queue import Queue
 import time
 
-# strQuery = ""
-jobp_Q = Queue()
-main_Q = Queue()
-def thread_sql(jobDetail=None):
-    jobp_Q.put(jobDetail.parse_xml_2_query(jobDetail.get_param()))
-    # time.sleep(10)
-    jobp_Q.task_done()  
-
-#################################
-#---------insert table----------#
-#################################
-#insert param table
-def insert_param_thread(host=None):
+class syncJobparam():
+    """docstring for syncJobparam"""
+    def __init__(self, cfghost=None):
+        self.cfghost = cfghost
+        self.jobp_Q = Queue()
+    #insert param to database
+    def insert_param(self):
     # time.sleep(2)
-    start = time.time()
-    lstJob = get_lstJob_id(host)
-    print len(lstJob)
-    strQuery = "insert into job_param(jid, host, name, wid, backup) values "
-    for job in lstJob:
-        param = JobDetail(job['jid'], job['host'])
-        job = threading.Thread(target=thread_sql, kwargs={'jobDetail':param})
-        job.daemon = True
-        job.start()
-        job.join()
-    jobp_Q.join()
-    print jobp_Q.qsize()
-    while not jobp_Q.empty():
-        strQuery += jobp_Q.get()
-    sql = strQuery[:-1] + ";commit;"
-    File("sql/").write_log("param_job.sql", sql)
-    main_Q.put(sql)
-    main_Q.task_done()
-    print ('End job_param: ', time.time() - start)
-#array list jid
-def get_lstJob_id(host):
-    response_xml = Job(host).get_job_xml()
-    return Job(host).count_job(response_xml)
+        start = time.time()
+        lstJob = self.get_lstJob_id(self.cfghost)
+        strQuery ="""delete from job_param where host = '%s'; insert into job_param(jid, host, name, wid, backup) values """%(self.cfghost['host'])
+        for job in lstJob:
+            param = JobDetail(job['jid'], job['host'])
+            job = threading.Thread(target=self.thread_sql, kwargs={'jobDetail':param})
+            job.daemon = True
+            job.start()
+            job.join()
+        self.jobp_Q.join()
+        print len(lstJob)
+        print self.jobp_Q.qsize()
+        while not self.jobp_Q.empty():
+            strQuery += self.jobp_Q.get()
+        sql = strQuery[:-1] + ";commit;"
+        File("sql/").write_log("param_job.sql", sql)
+        os.system(self.command_sql(sql.encode('utf-8')))
+        print ('End insert job_param: ', time.time() - start)
 
-def command_sql(sql):
-    return """mysql -u%s -p'%s' %s -h %s -e "%s" """%(osDb.DATABASE_USER, osDb.DATABASE_PASSWORD, osDb.DATABASE_NAME, osDb.DATABASE_HOST, sql)
+    
+    #connect to mysqld
+    def command_sql(self, sql):
+        return """mysql -u%s -p'%s' %s -h %s -e "%s" """%(osDb.DATABASE_USER, osDb.DATABASE_PASSWORD, osDb.DATABASE_NAME, osDb.DATABASE_HOST, sql)
+    
+    #get list jobid by host
+    def get_lstJob_id(self, host):
+        response_xml = Job(host).get_job_xml()
+        return Job(host).count_job(response_xml)
+    
+    #thread add query
+    def thread_sql(self,jobDetail=None):
+        self.jobp_Q.put(jobDetail.parse_xml_2_query(jobDetail.get_param()))
+        # time.sleep(10)
+        self.jobp_Q.task_done() 
+
+    def truncate_table(self):
+        #time.sleep(1800)
+        time.sleep(10)
+        strQuery = 'truncate job_param;alter table job_param auto_increment = 1;'
+        os.system(command_sql(strQuery))
+        print "truncate complie"
+
+
+def start_insert(host = None):
+    obj =  syncJobparam(host)
+    obj.insert_param()
 
 def main():
-    list_Jobs = []
     for host in osDb.THOMSON_HOST:
-        thread_param = threading.Thread(target=insert_param_thread, kwargs={'host':host})
+        thread_param = threading.Thread(target=start_insert, kwargs={'host':host})
+        #thread_param.daemon = True
         thread_param.start()
-        thread_param.join()
-    main_Q.join()
-    strQuery = 'truncate job_param;alter table job_param auto_increment = 1;'
-    while not main_Q.empty():
-        # print strQuery
-        tmp= main_Q.get()
-        strQuery +=tmp
-        #print tmp
-       # os.system(command_sql(tmp))
-    os.system(command_sql(strQuery.encode('utf-8')))
-    start = time.time()
-    File("sql/").write_log("all-param.sql", strQuery)
-    print ('End-inser-param', time.time() - start)
-
-# def mai():
 
 if __name__ == '__main__':
     main()

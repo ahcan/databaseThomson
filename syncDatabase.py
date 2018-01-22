@@ -185,8 +185,10 @@ def insert_node(host=None):
     # finally:
     #     strQuery =''
     sql = sql
-    sqlDetail = sqlDetail
+    sqlDetail = sqlDetail.decode('utf-8')
+    #print sqlDetail
     File('sql/').write_log("node.sql", sql)
+    File('sql/').write_log("node_detail.sql", sqlDetail)
     main_Q.put(sql)
     main_Q.task_done()
     main_Q.put(sqlDetail)
@@ -194,8 +196,6 @@ def insert_node(host=None):
     print ('End Node: ', time.time() - start)
 
 def command_sql(sql):
-    #File("sql/").write_log("all.sql", unicode(sql,'utf-8'))
-    #print (sql)
     return """mysql --default-character-set=utf8 -u%s -p'%s' %s -h %s -e "%s" """%(osDb.DATABASE_USER, osDb.DATABASE_PASSWORD, osDb.DATABASE_NAME, osDb.DATABASE_HOST,sql)
 
 def main():
@@ -222,7 +222,6 @@ def main():
         # print tmp
         #os.system(command_sql(tmp))
         #print tmp
-    #strQuery = unicode(strQuery,'utf-8')
     os.system(command_sql(strQuery.encode('utf-8')))
     start = time.time()
     File("sql/").write_log("all.sql", strQuery)
