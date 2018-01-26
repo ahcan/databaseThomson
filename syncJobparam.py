@@ -68,6 +68,7 @@ def main():
         thread_param = threading.Thread(target=start_insert, kwargs={'host':host})
         #thread_param.daemon = True
         thread_param.start()
+        thread_param.join()
 
 if __name__ == '__main__':
     main()
