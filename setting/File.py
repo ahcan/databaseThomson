@@ -1,5 +1,7 @@
 #-*- encoding: utf-8
 import io
+import json
+import logging, logging.config
 class File:
     def __init__(self, path):
         self.file_path = path
@@ -25,3 +27,10 @@ class File:
         f = io.open(self.file_path + filename, 'w')
         f.write(content)
         f.close()
+
+def getLog(loggerName):
+    with open("setting/logging_configuration.json", 'r') as configuration_file:
+        config_dict = json.load(configuration_file)
+    logging.config.dictConfig(config_dict)
+    # Log that the logger was configured
+    return logging.getLogger(loggerName)
