@@ -1,23 +1,30 @@
 #-*- encoding: utf-8
 from setting.Databasethomson import Database
 from thomson_api import Job, JobDetail, Workflow, Node
-from setting.File import File
+from setting.File import File, getLog
 from setting import config as osDb
 import os
 import threading
 from Queue import Queue
 import time
+import logging, logging.config #ghi log
+
 
 class syncJobparam():
     """docstring for syncJobparam"""
     def __init__(self, cfghost=None):
         self.cfghost = cfghost
         self.jobp_Q = Queue()
+        self.logger = getLog('Sync job param')
+        self.logger.setLevel(logging.DEBUG)
     #insert param to database
     def insert_param(self):
     # time.sleep(2)
         start = time.time()
-        lstJob = self.get_lstJob_id(self.cfghost)
+        try:
+            lstJob = self.get_lstJob_id(self.cfghost)
+        except Exception as e:
+            self.logger.error('Get list Job: %s' %e)
         strQuery ="""delete from job_param where host = '%s'; insert into job_param(jid, host, name, wid, backup) values """%(self.cfghost['host'])
         for job in lstJob:
             param = JobDetail(job['jid'], job['host'])
@@ -26,14 +33,16 @@ class syncJobparam():
             job.start()
             job.join()
         self.jobp_Q.join()
-        print len(lstJob)
-        print self.jobp_Q.qsize()
+        self.logger.info('Job: %s Job inserted: %s' %(len(lstJob), self.jobp_Q.qsize()))
         while not self.jobp_Q.empty():
             strQuery += self.jobp_Q.get()
         sql = strQuery[:-1] + ";commit;"
         File("sql/").write_log("param_job.sql", sql)
-        os.system(self.command_sql(sql.encode('utf-8')))
-        print ('End insert job_param: ', time.time() - start)
+        try:
+            os.system(self.command_sql(sql.encode('utf-8')))
+            self.logger.info('Completed host %s in %s' %(self.cfghost['host'], time.time() - start))
+        except Exception as e:
+            self.logger.error('Host %s: %s' %(self.cfghost['host'], e))
 
     
     #connect to mysqld

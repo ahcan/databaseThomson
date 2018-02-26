@@ -1,0 +1,28 @@
+2018-02-26 11:42:09,423 - Get query insert Job - INFO - Commpleted in 0.0476880073547!
+2018-02-26 11:42:09,521 - Get query insert Job - INFO - Commpleted in 0.0478229522705!
+2018-02-26 11:47:33,028 - Get query insert Job - INFO - Commpleted query job in 0.0482158660889 !
+2018-02-26 11:47:33,068 - Get query insert Workflow - INFO - Commpleted query workflow in 0.0386500358582 ! 
+2018-02-26 11:47:33,291 - Get query insert Job - INFO - Commpleted query job in 0.212708950043 !
+2018-02-26 11:47:33,352 - Get query insert Workflow - INFO - Commpleted query workflow in 0.0601141452789 ! 
+2018-02-26 12:43:51,412 - Get query insert Job - INFO - Completed query job in 0.0492389202118.
+2018-02-26 12:43:51,454 - Get query insert Workflow - INFO - Completed query workflow in 0.0418179035187.
+2018-02-26 12:43:51,465 - Get query insert Node - INFO - Completed query node in 0.0104441642761.
+2018-02-26 12:43:51,511 - Get query insert Job - INFO - Completed query job in 0.0451641082764.
+2018-02-26 12:43:51,573 - Get query insert Workflow - INFO - Completed query workflow in 0.0607719421387.
+2018-02-26 12:43:51,581 - Get query insert Node - INFO - Completed query node in 0.00807404518127.
+2018-02-26 12:43:51,704 - Insert Job, Node, Workflow - INFO - Completed insert Job-Node-Workflow in 0.121571063995
+2018-02-26 12:45:14,436 - Get query insert Job - INFO - Completed 0.0457630157471.
+2018-02-26 12:45:14,475 - Get query insert Workflow - INFO - Completed in 0.0381259918213.
+2018-02-26 12:45:14,485 - Get query insert Node - INFO - Completed in 0.00940704345703.
+2018-02-26 12:45:14,528 - Get query insert Job - INFO - Completed 0.0418510437012.
+2018-02-26 12:45:14,587 - Get query insert Workflow - INFO - Completed in 0.0594291687012.
+2018-02-26 12:45:14,596 - Get query insert Node - INFO - Completed in 0.00832200050354.
+2018-02-26 12:45:14,752 - Insert Job, Node, Workflow - INFO - Completed in 0.154487848282
+2018-02-26 13:11:39,610 - __main__ - INFO - Job: 327 Job inserted: 327
+2018-02-26 13:11:39,650 - __main__ - INFO - Completed host 172.29.3.189 in 0.270895004272
+2018-02-26 13:11:39,884 - __main__ - INFO - Job: 327 Job inserted: 327
+2018-02-26 13:11:39,914 - __main__ - INFO - Completed host 172.29.70.189 in 0.26265001297
+2018-02-26 13:12:46,885 - Sync job param - INFO - Job: 327 Job inserted: 327
+2018-02-26 13:12:46,945 - Sync job param - INFO - Completed host 172.29.3.189 in 0.290531873703
+2018-02-26 13:12:47,183 - Sync job param - INFO - Job: 327 Job inserted: 327
+2018-02-26 13:12:47,208 - Sync job param - INFO - Completed host 172.29.70.189 in 0.260262012482

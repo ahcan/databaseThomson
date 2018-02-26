@@ -1,33 +1,15 @@
 #-*- encoding: utf-8
 from setting.Databasethomson import Database
 from thomson_api import Job, JobDetail, Workflow, Node
-from setting.File import File
+from setting.File import File, getLog
 from setting import config as osDb
 import os
 import threading
 from Queue import Queue
 import time
-
+import logging, logging.config
 
 threadLimiter = threading.BoundedSemaphore(10)
-class threadparam(threading.Thread):
-    """docstring for threadparam"""
-    def __init__(self, job):
-        super(threadparam, self).__init__()
-        self.queue = Queue()
-        self.job = job
-
-    def run(self):
-        threadLimiter.acquire()
-        try:
-            self.work()
-        finally:
-            threadLimiter.release()
-        
-    def work(self):
-        time.sleep(0.1)
-        self.queue.put(self.job.parse_xml_2_query(self.job.get_param()))
-        self.queue.task_done()
 
 # strQuery = ""
 jobp_Q = Queue()
@@ -91,6 +73,9 @@ def create_tbNodeDetail():
 
 #insert job table
 def insert_job(host=None):
+    # create logger
+    logger = getLog('Get query insert Job')
+    logger.setLevel(logging.DEBUG)
     start = time.time()
     strQuery = "insert into job (jid, host, state, status, prog, ver, startdate, enddate) values"
     response_xml = Job(host).get_job_xml()
@@ -99,7 +84,7 @@ def insert_job(host=None):
     File('sql/').write_log("job.sql", sql)
     main_Q.put(sql)
     main_Q.task_done()
-    print ('End Job: ', time.time() - start)
+    logger.info('Completed %s.' %(time.time() - start))
 
 #insert param table
 def insert_param_thread(host=None):
@@ -157,6 +142,9 @@ def get_lstJob_id(host):
 
 #insert workflow table
 def insert_workflow(host=None):
+    #create logger
+    logger = getLog('Get query insert Workflow')
+    logger.setLevel(logging.DEBUG)
     start = time.time()
     sql = "insert into  workflow(wid, name, host, pubver, priver) values"
     response_xml = Workflow(host)
@@ -165,15 +153,21 @@ def insert_workflow(host=None):
     File("sql/").write_log("workflow.sql", sql)
     main_Q.put(sql)
     main_Q.task_done()
-    print ('End Workflow: ', time.time() - start)
+    logger.info('Completed in %s.' %(time.time() - start))
 
 #insert node table
 def insert_node(host=None):
+    #create logger
+    logger = getLog('Get query insert Node')
+    logger.setLevel(logging.DEBUG)
     start = time.time()
     strQueryNode = "insert into node(nid, host, cpu, alloccpu, mem, allocmem, status, state, uncreachable) values"
     strQueryDetail = "insert into node_detail(nid, host, jid) values"
     # response_xml = Node(host).get_job_xml()
-    sql, sqlDetail = Node(host).get_node()
+    try:
+        sql, sqlDetail = Node(host).get_node()    
+    except Exception as e:
+        logger.error('Get Node %s' %(e))
     sql = strQueryNode + sql[:-1] + ";commit;"
     sqlDetail = strQueryDetail + sqlDetail[:-1]+";commit;"
     # command = command_sql(sql)
@@ -193,12 +187,14 @@ def insert_node(host=None):
     main_Q.task_done()
     main_Q.put(sqlDetail)
     main_Q.task_done()
-    print ('End Node: ', time.time() - start)
+    logger.info('Completed in %s.' %(time.time() - start))
 
 def command_sql(sql):
     return """mysql --default-character-set=utf8 -u%s -p'%s' %s -h %s -e "%s" """%(osDb.DATABASE_USER, osDb.DATABASE_PASSWORD, osDb.DATABASE_NAME, osDb.DATABASE_HOST,sql)
 
 def main():
+    logger = getLog('Insert Job, Node, Workflow')
+    logger.setLevel(logging.DEBUG)
     list_Jobs = []
     for host in osDb.THOMSON_HOST:
         thread_job = threading.Thread(target=insert_job, kwargs={'host':host})
@@ -222,8 +218,12 @@ def main():
         # print tmp
         #os.system(command_sql(tmp))
         #print tmp
-    os.system(command_sql(strQuery.encode('utf-8')))
     start = time.time()
+    try:
+        os.system(command_sql(strQuery.encode('utf-8')))
+        logger.info('Completed in %s' %( time.time() - start))
+    except Exception as e:
+        logger.error('Insert Job-Node-Workflow %s' %e)
     File("sql/").write_log("all.sql", strQuery)
     # command = command_sql(strQuery)
     # try:
@@ -233,7 +233,6 @@ def main():
     #     print e
     # finally:
     #     strQuery = ''
-    print ('End ', time.time() - start)
 
 # def mai():
 
