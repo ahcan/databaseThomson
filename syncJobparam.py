@@ -15,8 +15,8 @@ class syncJobparam():
     def __init__(self, cfghost=None):
         self.cfghost = cfghost
         self.jobp_Q = Queue()
-        self.logger = getLog('Sync job param')
-        self.logger.setLevel(logging.DEBUG)
+        self.logger = getLog('Sync job param %s' %(cfghost['host']))
+        self.logger.setLevel(logging.INFO)
     #insert param to database
     def insert_param(self):
     # time.sleep(2)
@@ -40,9 +40,9 @@ class syncJobparam():
         File("sql/").write_log("param_job.sql", sql)
         try:
             os.system(self.command_sql(sql.encode('utf-8')))
-            self.logger.info('Completed host %s in %s' %(self.cfghost['host'], time.time() - start))
+            self.logger.info('Completed in %s' %(time.time() - start))
         except Exception as e:
-            self.logger.error('Host %s: %s' %(self.cfghost['host'], e))
+            self.logger.error(e)
 
     
     #connect to mysqld

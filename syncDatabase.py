@@ -74,8 +74,8 @@ def create_tbNodeDetail():
 #insert job table
 def insert_job(host=None):
     # create logger
-    logger = getLog('Get query insert Job')
-    logger.setLevel(logging.DEBUG)
+    logger = getLog('Get query insert Job %s'%(host['host']))
+    logger.setLevel(logging.INFO)
     start = time.time()
     strQuery = "insert into job (jid, host, state, status, prog, ver, startdate, enddate) values"
     response_xml = Job(host).get_job_xml()
@@ -143,8 +143,8 @@ def get_lstJob_id(host):
 #insert workflow table
 def insert_workflow(host=None):
     #create logger
-    logger = getLog('Get query insert Workflow')
-    logger.setLevel(logging.DEBUG)
+    logger = getLog('Get query insert Workflow %s'%(host['host']))
+    logger.setLevel(logging.INFO)
     start = time.time()
     sql = "insert into  workflow(wid, name, host, pubver, priver) values"
     response_xml = Workflow(host)
@@ -158,8 +158,8 @@ def insert_workflow(host=None):
 #insert node table
 def insert_node(host=None):
     #create logger
-    logger = getLog('Get query insert Node')
-    logger.setLevel(logging.DEBUG)
+    logger = getLog('Get query insert Node %s'%(host['host']))
+    logger.setLevel(logging.INFO)
     start = time.time()
     strQueryNode = "insert into node(nid, host, cpu, alloccpu, mem, allocmem, status, state, uncreachable) values"
     strQueryDetail = "insert into node_detail(nid, host, jid) values"
@@ -194,7 +194,7 @@ def command_sql(sql):
 
 def main():
     logger = getLog('Insert Job, Node, Workflow')
-    logger.setLevel(logging.DEBUG)
+    logger.setLevel(logging.INFO)
     list_Jobs = []
     for host in osDb.THOMSON_HOST:
         thread_job = threading.Thread(target=insert_job, kwargs={'host':host})
@@ -224,7 +224,7 @@ def main():
         logger.info('Completed in %s' %( time.time() - start))
     except Exception as e:
         logger.error('Insert Job-Node-Workflow %s' %e)
-    File("sql/").write_log("all.sql", strQuery)
+    # File("sql/").write_log("all.sql", strQuery)
     # command = command_sql(strQuery)
     # try:
     #     os.system(command)
