@@ -16,7 +16,7 @@
         }
     },
     "root": {
-        "level": "DEBUG",
+        "level": "INFO",
         "handlers": ["file_handler"]
     }
 }
