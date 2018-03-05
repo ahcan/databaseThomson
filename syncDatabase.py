@@ -80,10 +80,14 @@ def insert_job(host=None):
     strQuery = "insert into job (jid, host, state, status, prog, ver, startdate, enddate) values"
     response_xml = Job(host).get_job_xml()
     sql = Job(host).parse_xml_2_query(response_xml)[:-1]
-    sql = strQuery + sql + ";commit;"
+    if len(sql):
+       sql = strQuery + sql + ";commit;"
+       main_Q.put(sql)
+       main_Q.task_done()
+    else:
+       main_Q.put(sql)
+       main_Q.task_done()
     File('sql/').write_log("job.sql", sql)
-    main_Q.put(sql)
-    main_Q.task_done()
     logger.info('Completed %s.' %(time.time() - start))
 
 #insert param table
@@ -193,8 +197,7 @@ def command_sql(sql):
     return """mysql --default-character-set=utf8 -u%s -p'%s' %s -h %s -e "%s" """%(osDb.DATABASE_USER, osDb.DATABASE_PASSWORD, osDb.DATABASE_NAME, osDb.DATABASE_HOST,sql)
 
 def main():
-    logger = getLog('Insert Job, Node, Workflow')
-    logger.setLevel(logging.INFO)
+    
     list_Jobs = []
     for host in osDb.THOMSON_HOST:
         thread_job = threading.Thread(target=insert_job, kwargs={'host':host})
@@ -210,20 +213,29 @@ def main():
     main_Q.join()
     strQuery = "truncate job; truncate workflow; truncate node; truncate node_detail; alter table job auto_increment = 1;\
      alter table workflow auto_increment = 1; alter table node auto_increment = 1; alter table node_detail auto_increment = 1;"
-    #strQuery=''
+    os.system(command_sql(strQuery.encode('utf-8')))
     while not main_Q.empty():
-        # print strQuery
         tmp= main_Q.get()
-        strQuery +=tmp
+        if tmp.find('job') != -1: 
+            logger = getLog('Insert Job')
+        elif tmp.find('node') != -1:
+            logger = getLog('Insert Node')
+        elif tmp.find('workflow') != -1:
+            logger = getLog('Inster Workflow')
+        #logger = getLog('Insert Job')
+        logger.setLevel(logging.INFO)
+        #strQuery +=tmp
         # print tmp
         #os.system(command_sql(tmp))
         #print tmp
-    start = time.time()
-    try:
-        os.system(command_sql(strQuery.encode('utf-8')))
-        logger.info('Completed in %s' %( time.time() - start))
-    except Exception as e:
-        logger.error('Insert Job-Node-Workflow %s' %e)
+        start = time.time()
+        try:
+           os.system(command_sql(tmp.encode('utf-8')))
+           logger.info('completed in %s' %( time.time() - start))
+        except exception as e:
+           logger.error('insert job-node-workflow %s' %e)
+
+    
     # File("sql/").write_log("all.sql", strQuery)
     # command = command_sql(strQuery)
     # try:

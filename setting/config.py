@@ -25,10 +25,10 @@ THOMSON_HOST=[
         'host'  :   '172.29.70.189',
         'url' : 'http://%s/services/Maltese' % ('172.29.70.189'),
     },
-    #{
-    #    'user' : 'iptv_tool', #lab
-    #    'passwd' : '123456',
-    #    'host'  : '172.17.5.110',
-    #    'url' : 'http://%s/services/Maltese' % ('172.17.5.110'),
-    #},
+    {
+        'user' : 'iptv_tool', #lab
+        'passwd' : '123456',
+        'host'  : '172.17.5.110',
+        'url' : 'http://%s/services/Maltese' % ('172.17.5.110'),
+    },
 ]
