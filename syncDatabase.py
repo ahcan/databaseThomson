@@ -232,6 +232,7 @@ def main():
         try:
            os.system(command_sql(tmp.encode('utf-8')))
            logger.info('completed in %s' %( time.time() - start))
+           #print('insert finished')
         except exception as e:
            logger.error('insert job-node-workflow %s' %e)
 
@@ -246,7 +247,6 @@ def main():
     # finally:
     #     strQuery = ''
 
-# def mai():
 
 if __name__ == '__main__':
     main()
