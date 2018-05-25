@@ -1,22 +1,61 @@
 {
-    "version": 1,
-    "disable_existing_loggers": false,
-    "formatters":{ 
+     "version": 1,
+     "disable_existing_loggers": false,
+     "formatters":{
         "simple": {
-            "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+            "format": "%(asctime)s - %(name)s - %(levelname)s - message: %(message)s"
+        },
+        "error": {
+            "format": "%(asctime)s - %(name)s - %(levelname)s - p%(process)s {%(pathname)s:%(lineno)d} - message: %(message)s"
         }
-    },
-    "handlers": {
-        "file_handler": {
+     },
+     "handlers": {
+        "cache_handler": {
             "class": "logging.FileHandler",
             "level": "DEBUG",
             "formatter": "simple",
             "filename": "log/syncCache.log",
             "encoding": "utf8"
+        },
+        "cache_error_handler": {
+            "class": "logging.FileHandler",
+            "level": "ERROR",
+            "formatter": "error",
+            "filename": "log/syncCache.log",
+            "encoding": "utf8"
+        },
+        "jobparam_handler": {
+            "class": "logging.FileHandler",
+            "level": "INFO",
+            "formatter": "simple",
+            "filename": "log/syncJobParam.log",
+            "encoding": "utf8"
+        },
+        "job_param_error_handler": {
+            "class": "logging.FileHandler",
+            "level": "ERROR",
+            "formatter": "error",
+            "filename": "log/syncJobParam.log",
+            "encoding": "utf8"
         }
-    },
-    "root": {
-        "level": "INFO",
-        "handlers": ["file_handler"]
-    }
+     },
+     "root": {
+        "level": "WARNING",
+        "handlers": []
+     },
+     "loggers": {
+        "Job_Param": {
+          "handlers": ["jobparam_handler"]
+        },
+        "Error_Job_Param": {
+          "handlers": ["job_param_error_handler"]
+        },
+        "Sync_Data": {
+          "handlers": ["cache_handler"]
+        },
+        "Error_Sync_Data": {
+          "handlers": ["cache_error_handler"]
+        }
+
+     }
 }

@@ -15,8 +15,11 @@ class syncJobparam():
     def __init__(self, cfghost=None):
         self.cfghost = cfghost
         self.jobp_Q = Queue()
-        self.logger = getLog('Sync job param %s' %(cfghost['host']))
+        #self.logger = getLog('Sync job param %s' %(cfghost['host']))
+        self.logger = getLog('Job_Param')
         self.logger.setLevel(logging.INFO)
+        self.logger.info('Sync job param %s' %(cfghost['host']))
+        self.logerr = getLog('Error_Job_Param')
     #insert param to database
     def insert_param(self):
     # time.sleep(2)
@@ -24,7 +27,7 @@ class syncJobparam():
         try:
             lstJob = self.get_lstJob_id(self.cfghost)
         except Exception as e:
-            self.logger.error('Get list Job: %s' %e)
+            self.logerr.error('Get list Job: %s' %(e))
         strQuery ="""delete from job_param where host = '%s'; insert into job_param(jid, host, name, wid, backup) values """%(self.cfghost['host'])
         for job in lstJob:
             param = JobDetail(job['jid'], job['host'])
@@ -42,8 +45,9 @@ class syncJobparam():
             os.system(self.command_sql(sql.encode('utf-8')))
             self.logger.info('Completed in %s' %(time.time() - start))
         except Exception as e:
-            self.logger.error(e)
-
+            self.logerr.error("Insert Job list %s"%(e))
+            return 1
+        return 0
     
     #connect to mysqld
     def command_sql(self, sql):
@@ -51,8 +55,12 @@ class syncJobparam():
     
     #get list jobid by host
     def get_lstJob_id(self, host):
-        response_xml = Job(host).get_job_xml()
-        return Job(host).count_job(response_xml)
+        try:
+            response_xml = Job(host).get_job_xml()
+            return Job(host).count_job(response_xml)
+        except Exception as e:
+            self.logerr.error(e)
+            return 1
     
     #thread add query
     def thread_sql(self,jobDetail=None):
@@ -75,7 +83,7 @@ def start_insert(host = None):
 def main():
     for host in osDb.THOMSON_HOST:
         thread_param = threading.Thread(target=start_insert, kwargs={'host':host})
-        #thread_param.daemon = True
+        thread_param.daemon = True
         thread_param.start()
         thread_param.join()
 

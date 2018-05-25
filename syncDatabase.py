@@ -74,12 +74,19 @@ def create_tbNodeDetail():
 #insert job table
 def insert_job(host=None):
     # create logger
-    logger = getLog('Get query insert Job %s'%(host['host']))
+    #logger = getLog('Get query insert Job %s'%(host['host']))
+    logger = getLog('Sync_Data')
     logger.setLevel(logging.INFO)
+    logger.info('Get query insert Job %s'%(host['host']))
     start = time.time()
     strQuery = "insert into job (jid, host, state, status, prog, ver, startdate, enddate) values"
-    response_xml = Job(host).get_job_xml()
-    sql = Job(host).parse_xml_2_query(response_xml)[:-1]
+    try:
+        response_xml = Job(host).get_job_xml()
+        sql = Job(host).parse_xml_2_query(response_xml)[:-1]
+    except Exception as e:
+        logerr = getLog('Error_Sync_Data')
+        logerr.error('Get Log %s'%(e))
+        return 1
     if len(sql):
        sql = strQuery + sql + ";commit;"
        main_Q.put(sql)
@@ -89,44 +96,7 @@ def insert_job(host=None):
        main_Q.task_done()
     File('sql/').write_log("job.sql", sql)
     logger.info('Completed %s.' %(time.time() - start))
-
-#insert param table
-def insert_param_thread(host=None):
-    # time.sleep(2)
-    start = time.time()
-    lstJob = get_lstJob_id(host)
-    strQuery = "delete from job_param where host = '%s';ALTER TABLE job AUTO_INCREMENT = 1; insert into job_param(jid, host, name, wid) values "%(host['host'])
-    for job in lstJob:
-        param = JobDetail(job['jid'], job['host'])
-        job = threading.Thread(target=thread_sql, kwargs={'jobDetail':param})
-        job.daemon = True
-        job.start()
-        job.join()
-    jobp_Q.join()
-    print jobp_Q.qsize()
-    print len(lstJob)
-    while not jobp_Q.empty():
-        strQuery += jobp_Q.get()
-    sql = strQuery[:-1] + ";commit;"
-    File("sql/").write_log("param_job.sql", sql)
-    main_Q.put(sql)
-    main_Q.task_done()
-    print ('End job_param: ', time.time() - start)
-
-def insert_param(lstJid):
-    # sql = """delete from job_param where host = '%s';"""%()
-    lstJob = get_lstJob_id()    
-    for job in lstJob:
-        param = JobDetail(job['jid'], job['host'])
-        sql += param.parse_xml_2_query(param.get_param())
-    print sql
-    command = command_sql(sql)
-    try:
-        os.system(command)
-        print "###success###"
-    except Exception as e:
-        raise e
-    File("sql/").write_log("param_log.sql", sql)
+    return 0
 
 #array list jid
 def get_lstJob_id(host):
@@ -147,31 +117,43 @@ def get_lstJob_id(host):
 #insert workflow table
 def insert_workflow(host=None):
     #create logger
-    logger = getLog('Get query insert Workflow %s'%(host['host']))
+    #logger = getLog('Get query insert Workflow %s'%(host['host']))
+    logger = getLog('Sync_Data')
     logger.setLevel(logging.INFO)
+    logger.info('Get query insert Workflow %s'%(host['host']))
     start = time.time()
     sql = "insert into  workflow(wid, name, host, pubver, priver) values"
-    response_xml = Workflow(host)
+    try:
+        response_xml = Workflow(host)
+    except Exception as e:
+        logerr = getLog('Error_Sync_Data')
+        logerr.error('Get Workflow %s'%(e))
+        return 1
     sql += response_xml.parse_xml_2_query(response_xml.get_workflow())[:-1]+";commit;"
     sql = sql
     File("sql/").write_log("workflow.sql", sql)
     main_Q.put(sql)
     main_Q.task_done()
     logger.info('Completed in %s.' %(time.time() - start))
+    return 0
 
 #insert node table
 def insert_node(host=None):
     #create logger
-    logger = getLog('Get query insert Node %s'%(host['host']))
+    #logger = getLog('Get query insert Node %s'%(host['host']))
+    logger = getLog('Sync_Data')
     logger.setLevel(logging.INFO)
+    logger.info('Get query insert Node %s'%(host['host']))
     start = time.time()
     strQueryNode = "insert into node(nid, host, cpu, alloccpu, mem, allocmem, status, state, uncreachable) values"
     strQueryDetail = "insert into node_detail(nid, host, jid) values"
     # response_xml = Node(host).get_job_xml()
     try:
-        sql, sqlDetail = Node(host).get_node()    
+        sql, sqlDetail = Node(host).get_node()
     except Exception as e:
-        logger.error('Get Node %s' %(e))
+        logerr = getLog('Error_Sync_Data')
+        logerr.error('Get Node %s' %(e))
+        return 1
     sql = strQueryNode + sql[:-1] + ";commit;"
     sqlDetail = strQueryDetail + sqlDetail[:-1]+";commit;"
     # command = command_sql(sql)
@@ -192,6 +174,7 @@ def insert_node(host=None):
     main_Q.put(sqlDetail)
     main_Q.task_done()
     logger.info('Completed in %s.' %(time.time() - start))
+    return 0
 
 def command_sql(sql):
     return """mysql --default-character-set=utf8 -u%s -p'%s' %s -h %s -e "%s" """%(osDb.DATABASE_USER, osDb.DATABASE_PASSWORD, osDb.DATABASE_NAME, osDb.DATABASE_HOST,sql)
@@ -217,11 +200,14 @@ def main():
     while not main_Q.empty():
         tmp= main_Q.get()
         if tmp.find('job') != -1: 
-            logger = getLog('Insert Job')
+            logger = getLog('Sync_Data')
+            logger.info('Insert Job')
         elif tmp.find('node') != -1:
-            logger = getLog('Insert Node')
+            logger = getLog('Sync_Data')
+            logger.info('Insert Node')
         elif tmp.find('workflow') != -1:
-            logger = getLog('Inster Workflow')
+            logger = getLog('Sync_Data')
+            logger.info('Inster Workflow')
         #logger = getLog('Insert Job')
         logger.setLevel(logging.INFO)
         #strQuery +=tmp
@@ -229,12 +215,13 @@ def main():
         #os.system(command_sql(tmp))
         #print tmp
         start = time.time()
+        # execute query
         try:
            os.system(command_sql(tmp.encode('utf-8')))
            logger.info('completed in %s' %( time.time() - start))
-           #print('insert finished')
-        except exception as e:
-           logger.error('insert job-node-workflow %s' %e)
+        except Exception as e:
+           logerr = getLog('Error_Sync_Data')
+           logerr.error('insert job-node-workflow %s' %e)
 
     
     # File("sql/").write_log("all.sql", strQuery)
