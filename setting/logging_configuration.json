@@ -11,31 +11,39 @@
      },
      "handlers": {
         "cache_handler": {
-            "class": "logging.FileHandler",
+            "class": "logging.handlers.RotatingFileHandler",
             "level": "DEBUG",
             "formatter": "simple",
             "filename": "log/syncCache.log",
+            "maxBytes": 52428800,
+            "backupCount": 2,
             "encoding": "utf8"
         },
         "cache_error_handler": {
-            "class": "logging.FileHandler",
+            "class": "logging.handlers.RotatingFileHandler",
             "level": "ERROR",
             "formatter": "error",
             "filename": "log/syncCache.log",
+            "maxBytes": 52428800,
+            "backupCount": 2,
             "encoding": "utf8"
         },
         "jobparam_handler": {
-            "class": "logging.FileHandler",
+            "class": "logging.handlers.RotatingFileHandler",
             "level": "INFO",
             "formatter": "simple",
             "filename": "log/syncJobParam.log",
+            "maxBytes": 52428800,
+            "backupCount": 2,
             "encoding": "utf8"
         },
         "job_param_error_handler": {
-            "class": "logging.FileHandler",
+            "class": "logging.handlers.RotatingFileHandler",
             "level": "ERROR",
             "formatter": "error",
             "filename": "log/syncJobParam.log",
+            "maxBytes": 52428800,
+            "backupCount": 2,
             "encoding": "utf8"
         }
      },
