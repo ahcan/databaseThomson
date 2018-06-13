@@ -23,7 +23,7 @@
             "class": "logging.handlers.RotatingFileHandler",
             "level": "ERROR",
             "formatter": "error",
-            "filename": "log/syncCache.log",
+            "filename": "log/syncCache-error.log",
             "maxBytes": 52428800,
             "backupCount": 2,
             "encoding": "utf8"

@@ -88,14 +88,15 @@ def insert_job(host=None):
         logerr.error('Get Log %s'%(e))
         return 1
     if len(sql):
-       sql = strQuery + sql + ";commit;"
-       main_Q.put(sql)
-       main_Q.task_done()
-    else:
-       main_Q.put(sql)
-       main_Q.task_done()
-    File('sql/').write_log("job.sql", sql)
-    logger.info('Completed %s.' %(time.time() - start))
+        sql = strQuery + sql + ";commit;"
+        main_Q.put(sql)
+        main_Q.task_done()
+        logger.info('Completed %s.' %(time.time() - start))
+    try:
+        File('sql/').write_log("job.sql", sql)
+    except Exception as e:
+        logerr = getLog('Error_Sync_Data')
+        logerr.error('Get SQL Job error: %s'%(e))
     return 0
 
 #array list jid
@@ -124,19 +125,19 @@ def insert_workflow(host=None):
     start = time.time()
     sql = "insert into  workflow(wid, name, host, pubver, priver) values"
     try:
-        response_xml = Workflow(host)
+         response_xml = Workflow(host)
+         response_xml = response_xml.parse_xml_2_query(response_xml.get_workflow())
+         sql += response_xml[:-1]+";commit;"
+         File("sql/").write_log("workflow.sql", sql)
+         main_Q.put(sql)
+         main_Q.task_done()
+         logger.info('Completed in %s.' %(time.time() - start))
     except Exception as e:
-        logerr = getLog('Error_Sync_Data')
-        logerr.error('Get Workflow %s'%(e))
-        return 1
-    sql += response_xml.parse_xml_2_query(response_xml.get_workflow())[:-1]+";commit;"
-    sql = sql
-    File("sql/").write_log("workflow.sql", sql)
-    main_Q.put(sql)
-    main_Q.task_done()
-    logger.info('Completed in %s.' %(time.time() - start))
+         logerr = getLog('Error_Sync_Data')
+         logerr.error('Get Workflow %s'%(e))
+         return 1
     return 0
-
+ 
 #insert node table
 def insert_node(host=None):
     #create logger
@@ -147,15 +148,21 @@ def insert_node(host=None):
     start = time.time()
     strQueryNode = "insert into node(nid, host, cpu, alloccpu, mem, allocmem, status, state, uncreachable) values"
     strQueryDetail = "insert into node_detail(nid, host, jid) values"
-    # response_xml = Node(host).get_job_xml()
     try:
         sql, sqlDetail = Node(host).get_node()
+        sql = strQueryNode + sql[:-1] + ";commit;"
+        sqlDetail = strQueryDetail + sqlDetail[:-1]+";commit;"
+        sql = sql
+        sqlDetail = sqlDetail.decode('utf-8')
+        main_Q.put(sql)
+        main_Q.task_done()
+        main_Q.put(sqlDetail)
+        main_Q.task_done()
+        logger.info('Completed in %s.' %(time.time() - start))
     except Exception as e:
         logerr = getLog('Error_Sync_Data')
         logerr.error('Get Node %s' %(e))
         return 1
-    sql = strQueryNode + sql[:-1] + ";commit;"
-    sqlDetail = strQueryDetail + sqlDetail[:-1]+";commit;"
     # command = command_sql(sql)
     # try:
     #     os.system(command)
@@ -164,16 +171,14 @@ def insert_node(host=None):
     #     raise e
     # finally:
     #     strQuery =''
-    sql = sql
-    sqlDetail = sqlDetail.decode('utf-8')
+    
     #print sqlDetail
-    File('sql/').write_log("node.sql", sql)
-    File('sql/').write_log("node_detail.sql", sqlDetail)
-    main_Q.put(sql)
-    main_Q.task_done()
-    main_Q.put(sqlDetail)
-    main_Q.task_done()
-    logger.info('Completed in %s.' %(time.time() - start))
+    try:
+        File('sql/').write_log("node.sql", sql)
+        File('sql/').write_log("node_detail.sql", sqlDetail)
+    except Exception as e:
+        logerr = getLog('Error_Sync_Data')
+        logerr.error('Wirte file %s'%(e))
     return 0
 
 def command_sql(sql):
@@ -222,9 +227,7 @@ def main():
         except Exception as e:
            logerr = getLog('Error_Sync_Data')
            logerr.error('insert job-node-workflow %s' %e)
-
-    
-    # File("sql/").write_log("all.sql", strQuery)
+    #File("sql/").write_log("all.sql", tmp)
     # command = command_sql(strQuery)
     # try:
     #     os.system(command)
