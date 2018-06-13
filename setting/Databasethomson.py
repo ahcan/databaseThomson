@@ -1,14 +1,15 @@
 import threading
 import MySQLdb as mdb
 from setting.config import *
+from setting import config as osDb
 
 class Database:
     def __init__(self):
-        self.db = DATABASE_NAME
-        self.user = DATABASE_USER
-        self.password = DATABASE_PASSWORD
-        self.host = DATABASE_HOST
-        self.port = DATABASE_PORT
+        self.db = osDb.DATABASE_NAME
+        self.user = osDb.DATABASE_USER
+        self.password = osDb.DATABASE_PASSWORD
+        self.host = osDb.DATABASE_HOST
+        self.port = osDb.DATABASE_PORT
 
     def connect(self):
         return mdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password, db=self.db, charset='utf8')
