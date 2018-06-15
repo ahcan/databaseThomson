@@ -8,6 +8,7 @@ import threading
 from Queue import Queue
 import time
 import logging, logging.config
+from setting.utils import get_workflow
 
 threadLimiter = threading.BoundedSemaphore(10)
 
@@ -137,6 +138,20 @@ def insert_workflow(host=None):
          logerr.error('Get Workflow %s'%(e))
          return 1
     return 0
+
+def insert_workflow_many(host=None):
+    logger = getLog('Sync_Data')
+    logger.setLevel(logging.INFO)
+    logger.info('Get query insert Workflow %s'%(host['host']))
+    start = time.time()
+    try:
+        data = get_workflow(host)
+        logger.info('Completed in %s.' %(time.time() - start))
+        db = Database()
+        db.many_insert('workflow',data, 'wid', 'name', 'host')
+    except Exception as e:
+        pass
+    return 0
  
 #insert node table
 def insert_node(host=None):
@@ -190,52 +205,40 @@ def main():
     for host in osDb.THOMSON_HOST:
         thread_job = threading.Thread(target=insert_job, kwargs={'host':host})
         list_Jobs.append(thread_job)
-        thread_workflow = threading.Thread(target=insert_workflow, kwargs={'host':host})
+        thread_workflow = threading.Thread(target=insert_workflow_many, kwargs={'host':host})
         list_Jobs.append(thread_workflow)
         thread_node = threading.Thread(target=insert_node, kwargs={'host':host})
         list_Jobs.append(thread_node)
     for job in list_Jobs:
-        job.daemon = True
+        # job.daemon = True
         job.start()
-        job.join()
-    main_Q.join()
+        # job.join()
+    # main_Q.join()
+    time.sleep(10)
     strQuery = "truncate job; truncate workflow; truncate node; truncate node_detail; alter table job auto_increment = 1;\
      alter table workflow auto_increment = 1; alter table node auto_increment = 1; alter table node_detail auto_increment = 1;"
-    os.system(command_sql(strQuery.encode('utf-8')))
-    while not main_Q.empty():
-        tmp= main_Q.get()
-        if tmp.find('job') != -1: 
-            logger = getLog('Sync_Data')
-            logger.info('Insert Job')
-        elif tmp.find('node') != -1:
-            logger = getLog('Sync_Data')
-            logger.info('Insert Node')
-        elif tmp.find('workflow') != -1:
-            logger = getLog('Sync_Data')
-            logger.info('Inster Workflow')
-        #logger = getLog('Insert Job')
-        logger.setLevel(logging.INFO)
-        #strQuery +=tmp
-        # print tmp
-        #os.system(command_sql(tmp))
-        #print tmp
-        start = time.time()
-        # execute query
-        try:
-           os.system(command_sql(tmp.encode('utf-8')))
-           logger.info('completed in %s' %( time.time() - start))
-        except Exception as e:
-           logerr = getLog('Error_Sync_Data')
-           logerr.error('insert job-node-workflow %s' %e)
-    #File("sql/").write_log("all.sql", tmp)
-    # command = command_sql(strQuery)
-    # try:
-    #     os.system(command)
-    #     print "insert table #####success#####"
-    # except Exception as e:
-    #     print e
-    # finally:
-    #     strQuery = ''
+    # os.system(command_sql(strQuery.encode('utf-8')))
+    # while not main_Q.empty():
+    #     tmp= main_Q.get()
+    #     if tmp.find('job') != -1: 
+    #         logger = getLog('Sync_Data')
+    #         logger.info('Insert Job')
+    #     elif tmp.find('node') != -1:
+    #         logger = getLog('Sync_Data')
+    #         logger.info('Insert Node')
+    #     elif tmp.find('workflow') != -1:
+    #         logger = getLog('Sync_Data')
+    #         logger.info('Inster Workflow')
+    #     #logger = getLog('Insert Job')
+    #     logger.setLevel(logging.INFO)
+    #     start = time.time()
+    #     # execute query
+    #     try:
+    #        os.system(command_sql(tmp.encode('utf-8')))
+    #        logger.info('completed in %s' %( time.time() - start))
+    #     except Exception as e:
+    #        logerr = getLog('Error_Sync_Data')
+    #        logerr.error('insert job-node-workflow %s' %e)
 
 
 if __name__ == '__main__':

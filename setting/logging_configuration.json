@@ -45,6 +45,15 @@
             "maxBytes": 52428800,
             "backupCount": 2,
             "encoding": "utf8"
+        },
+        "data_error_handler":{
+            "class": "logging.handlers.RotatingFileHandler",
+            "level": "ERROR",
+            "formatter": "error",
+            "filename": "log/database-error.log",
+            "maxBytes": 52428800,
+            "backupCount": 2,
+            "encoding": "utf8"
         }
      },
      "root": {
@@ -63,7 +72,9 @@
         },
         "Error_Sync_Data": {
           "handlers": ["cache_error_handler"]
+        },
+        "Error_Data":{
+            "handlers": ["data_error_handler"]
         }
-
      }
 }
