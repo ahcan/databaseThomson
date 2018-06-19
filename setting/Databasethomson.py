@@ -31,6 +31,17 @@ class Database:
         self.close_connect(session)
         return 1
 
+    def execute_nonquery(self, session, query):
+        if not query:
+            print 'No query!'
+            return 0
+        #session = self.connect()
+        cur=session.cursor()
+        cur.execute(query)
+        #session.commit()
+        #self.close_connect(session)
+        return 1
+
     def execute_query(self, query):
         session = self.connect()
         try:
@@ -42,7 +53,7 @@ class Database:
         except Exception as e:
             self.close_connect(session)
             raise e
-            
+
     def many_insert(self, table, data, *args):
         """
         table: name table
@@ -53,24 +64,66 @@ class Database:
         val = ','
         for item in args:
             col +='%s,'%(item)
-            val +='/%/s,'
+            val +='%s,'
         val = val[1:-1]
         col = col[1:-1]
-        sql = "insert into %s(%s)values(%s)"%(table, col, val, data)
+        sql = "insert into {0} ({1}) values({2})".format(table, col, val)
         session = self.connect()
         cur = session.cursor()
         start = time.time()
         logger = getLog('Sync_Data')
         try:
-            cur.executemany(sql, data)
-            results = cur.fetchall()
+            for item in data:
+                cur.execute(sql, item)
+                #host = item[2]
+            #cur.execute('select * from workflow where host = \'{0}\''.format(host))
+            #results = cur.fetchall()
+            session.commit()
             self.close_connect(session)
             logger.info('Insert workflow complited in %s.'%(time.time()-start))
-            return results
         except Exception as e:
-            logerr = getLog('Error_Sync_Data')
+            logerr = getLog('Error_Data')
             self.close_connect(session)
             logerr.error('Insert workflow error: %s.'%(e))
+            return 0
+        finally:
+            return 0
+
+    def many_insert(self, session, table, data, *args):
+        """
+        session: session connect database
+        table: name table
+        data: array tuple
+        *args: chua cac filed
+        """
+        col = ','
+        val = ','
+        for item in args:
+            col +='%s,'%(item)
+            val +='%s,'
+        val = val[1:-1]
+        col = col[1:-1]
+        sql = "insert into {0} ({1}) values({2})".format(table, col, val)
+        #session = self.connect()
+        cur = session.cursor()
+        start = time.time()
+        logger = getLog('Sync_Data')
+        try:
+            for item in data:
+                cur.execute(sql, item)
+                host = item[2]
+            #cur.execute('select * from workflow where host = \'{0}\''.format(host))
+            #results = cur.fetchall()
+            #print "{0}-{1}".format(host, len(results))
+            session.commit()
+            #self.close_connect(session)
+            logger.info('Insert {0} complited in {1}.'.format(table, time.time()-start))
+        except Exception as e:
+            logerr = getLog('Error_Data')
+            self.close_connect(session)
+            logerr.error('Insert {0} error: {1}.'.format(table, e))
+            return 0
+        finally:
             return 0
 
     def many_update(self, table, data, *args):

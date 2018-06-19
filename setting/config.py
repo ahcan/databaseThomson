@@ -1,6 +1,6 @@
 #Database
-DATABASE_NAME = 'thomson'
-#DATABASE_NAME = 'thomson_test'
+#DATABASE_NAME = 'thomson'
+DATABASE_NAME = 'thomson_test'
 DATABASE_USER = 'thomson'
 #DATABASE_USER = 'root'
 DATABASE_PASSWORD = 'thomson@$@'

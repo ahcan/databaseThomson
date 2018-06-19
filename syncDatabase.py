@@ -8,7 +8,7 @@ import threading
 from Queue import Queue
 import time
 import logging, logging.config
-from setting.utils import get_workflow
+from setting.utils import *
 
 threadLimiter = threading.BoundedSemaphore(10)
 
@@ -102,16 +102,6 @@ def insert_job(host=None):
 
 #array list jid
 def get_lstJob_id(host):
-    # db = Database()
-    # sql = """select jid, host from job;"""
-    # lstJob = db.execute_query(sql)
-    # args = []
-    # while not lstJob:
-    #     lstJob = db.execute_query(sql)
-    #     print lstJob
-    # for job in lstJob:
-    #     args.append({'jid'      :job[0], 'host'     :job[1]})
-    # return args
     response_xml = Job(host).get_job_xml()
     return Job(host).count_job(response_xml)
 
@@ -139,7 +129,7 @@ def insert_workflow(host=None):
          return 1
     return 0
 
-def insert_workflow_many(host=None):
+def insert_workflow_many(session = None, host=None):
     logger = getLog('Sync_Data')
     logger.setLevel(logging.INFO)
     logger.info('Get query insert Workflow %s'%(host['host']))
@@ -148,10 +138,14 @@ def insert_workflow_many(host=None):
         data = get_workflow(host)
         logger.info('Completed in %s.' %(time.time() - start))
         db = Database()
-        db.many_insert('workflow',data, 'wid', 'name', 'host')
+        db.many_insert(session, 'workflow',data, 'wid', 'name', 'host')
+        return 1
     except Exception as e:
-        pass
-    return 0
+        logerr = getLog('Error_Sync_Data')
+        logerr.error('Get workflow error %s.'%(e))
+        raise
+    finally:
+        return 0
  
 #insert node table
 def insert_node(host=None):
@@ -200,23 +194,35 @@ def command_sql(sql):
     return """mysql --default-character-set=utf8 -u%s -p'%s' %s -h %s -e "%s" """%(osDb.DATABASE_USER, osDb.DATABASE_PASSWORD, osDb.DATABASE_NAME, osDb.DATABASE_HOST,sql)
 
 def main():
-    
     list_Jobs = []
+    db =  Database()
+    session = db.connect()
+    sqlTruncate =["truncate job;", "truncate workflow;", "truncate node;", "truncate node_detail;", "alter table job auto_increment = 1;", "alter table workflow auto_increment = 1;", "alter table node auto_increment = 1;", " alter table node_detail auto_increment = 1;"]
+    try:
+        for ite in sqlTruncate:
+            db.execute_nonquery(session, ite)
+        session.commit()
+    except Exception as e:
+        logerr = getLog('Error_Sync_Data')
+        logerr.error('Truncate table %s'%(e))
+    finally:
+        logger = getLog('Sync_Data')
+        logger.info('Final truncate table')
     for host in osDb.THOMSON_HOST:
-        thread_job = threading.Thread(target=insert_job, kwargs={'host':host})
-        list_Jobs.append(thread_job)
-        thread_workflow = threading.Thread(target=insert_workflow_many, kwargs={'host':host})
+        #thread_job = threading.Thread(target=insert_job, kwargs={'host':host})
+        #list_Jobs.append(thread_job)
+        thread_workflow = threading.Thread(target=insert_workflow_many, kwargs={'session':session, 'host':host})
         list_Jobs.append(thread_workflow)
-        thread_node = threading.Thread(target=insert_node, kwargs={'host':host})
-        list_Jobs.append(thread_node)
+        #thread_node = threading.Thread(target=insert_node, kwargs={'host':host})
+        #list_Jobs.append(thread_node)
     for job in list_Jobs:
         # job.daemon = True
         job.start()
-        # job.join()
+        job.join()
     # main_Q.join()
     time.sleep(10)
-    strQuery = "truncate job; truncate workflow; truncate node; truncate node_detail; alter table job auto_increment = 1;\
-     alter table workflow auto_increment = 1; alter table node auto_increment = 1; alter table node_detail auto_increment = 1;"
+    #strQuery = "truncate job; truncate workflow; truncate node; truncate node_detail; alter table job auto_increment = 1;\
+     #alter table workflow auto_increment = 1; alter table node auto_increment = 1; alter table node_detail auto_increment = 1;"
     # os.system(command_sql(strQuery.encode('utf-8')))
     # while not main_Q.empty():
     #     tmp= main_Q.get()
