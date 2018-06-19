@@ -151,6 +151,6 @@ class Database:
             results = cur.fetchall()
             self.close_connect(session)
             return results
-        except Exception as e:
+        except:
             self.close_connect(session)
             return 0

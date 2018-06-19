@@ -148,47 +148,27 @@ def insert_workflow_many(session = None, host=None):
         return 0
  
 #insert node table
-def insert_node(host=None):
+def insert_node(session, host=None):
     #create logger
     #logger = getLog('Get query insert Node %s'%(host['host']))
     logger = getLog('Sync_Data')
     logger.setLevel(logging.INFO)
     logger.info('Get query insert Node %s'%(host['host']))
     start = time.time()
-    strQueryNode = "insert into node(nid, host, cpu, alloccpu, mem, allocmem, status, state, uncreachable) values"
-    strQueryDetail = "insert into node_detail(nid, host, jid) values"
+    #strQueryNode = "insert into node(nid, host, cpu, alloccpu, mem, allocmem, status, state, uncreachable) values"
+    #strQueryDetail = "insert into node_detail(nid, host, jid) values"
     try:
-        sql, sqlDetail = Node(host).get_node()
-        sql = strQueryNode + sql[:-1] + ";commit;"
-        sqlDetail = strQueryDetail + sqlDetail[:-1]+";commit;"
-        sql = sql
-        sqlDetail = sqlDetail.decode('utf-8')
-        main_Q.put(sql)
-        main_Q.task_done()
-        main_Q.put(sqlDetail)
-        main_Q.task_done()
+        data = get_node(host)
         logger.info('Completed in %s.' %(time.time() - start))
+        db = Database()
+        db.many_insert(session, 'node', data, 'nid', 'host', 'cpu', 'alloccpu', 'nem', 'allocmem', 'status', 'state', 'uncreachable')
+        return 1
     except Exception as e:
         logerr = getLog('Error_Sync_Data')
         logerr.error('Get Node %s' %(e))
-        return 1
-    # command = command_sql(sql)
-    # try:
-    #     os.system(command)
-    #     print "insert table job\n#####success#####"
-    # except Exception as e:
-    #     raise e
-    # finally:
-    #     strQuery =''
-    
-    #print sqlDetail
-    try:
-        File('sql/').write_log("node.sql", sql)
-        File('sql/').write_log("node_detail.sql", sqlDetail)
-    except Exception as e:
-        logerr = getLog('Error_Sync_Data')
-        logerr.error('Wirte file %s'%(e))
-    return 0
+        raise
+    finally:
+        return 0
 
 def command_sql(sql):
     return """mysql --default-character-set=utf8 -u%s -p'%s' %s -h %s -e "%s" """%(osDb.DATABASE_USER, osDb.DATABASE_PASSWORD, osDb.DATABASE_NAME, osDb.DATABASE_HOST,sql)
@@ -213,8 +193,8 @@ def main():
         #list_Jobs.append(thread_job)
         thread_workflow = threading.Thread(target=insert_workflow_many, kwargs={'session':session, 'host':host})
         list_Jobs.append(thread_workflow)
-        #thread_node = threading.Thread(target=insert_node, kwargs={'host':host})
-        #list_Jobs.append(thread_node)
+        thread_node = threading.Thread(target=insert_node, kwargs={'session':session, 'host':host})
+        list_Jobs.append(thread_node)
     for job in list_Jobs:
         # job.daemon = True
         job.start()
