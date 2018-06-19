@@ -132,11 +132,11 @@ def insert_workflow(host=None):
 def insert_workflow_many(session = None, host=None):
     logger = getLog('Sync_Data')
     logger.setLevel(logging.INFO)
-    logger.info('Get query insert Workflow %s'%(host['host']))
+    #logger.info('Get query insert Workflow %s'%(host['host']))
     start = time.time()
     try:
         data = get_workflow(host)
-        logger.info('Completed in %s.' %(time.time() - start))
+        logger.info('Get query insert Workflow %s Completed in %s.' %(host['host'], time.time() - start))
         db = Database()
         db.many_insert(session, 'workflow',data, 'wid', 'name', 'host')
         return 1
@@ -153,15 +153,16 @@ def insert_node(session, host=None):
     #logger = getLog('Get query insert Node %s'%(host['host']))
     logger = getLog('Sync_Data')
     logger.setLevel(logging.INFO)
-    logger.info('Get query insert Node %s'%(host['host']))
     start = time.time()
-    #strQueryNode = "insert into node(nid, host, cpu, alloccpu, mem, allocmem, status, state, uncreachable) values"
     #strQueryDetail = "insert into node_detail(nid, host, jid) values"
     try:
-        data = get_node(host)
-        logger.info('Completed in %s.' %(time.time() - start))
+        data_node = get_node(host)
+        logger.info(' Get query insert Node %s Completed in %s.' %(host['host'] ,time.time() - start))
         db = Database()
-        db.many_insert(session, 'node', data, 'nid', 'host', 'cpu', 'alloccpu', 'nem', 'allocmem', 'status', 'state', 'uncreachable')
+        db.many_insert(session, 'node', data_node, 'nid', 'host', 'cpu', 'alloccpu', 'mem', 'allocmem', 'status', 'state', 'uncreachable')
+        data_nodedetail = get_node_detail(host)
+        print data_nodedetail
+        db.many_insert(session, 'node_detail', data_nodedetail, 'nid','host','jid')
         return 1
     except Exception as e:
         logerr = getLog('Error_Sync_Data')
@@ -191,12 +192,12 @@ def main():
     for host in osDb.THOMSON_HOST:
         #thread_job = threading.Thread(target=insert_job, kwargs={'host':host})
         #list_Jobs.append(thread_job)
-        thread_workflow = threading.Thread(target=insert_workflow_many, kwargs={'session':session, 'host':host})
-        list_Jobs.append(thread_workflow)
+        #thread_workflow = threading.Thread(target=insert_workflow_many, kwargs={'session':session, 'host':host})
+        #list_Jobs.append(thread_workflow)
         thread_node = threading.Thread(target=insert_node, kwargs={'session':session, 'host':host})
         list_Jobs.append(thread_node)
     for job in list_Jobs:
-        # job.daemon = True
+        job.daemon = True
         job.start()
         job.join()
     # main_Q.join()
