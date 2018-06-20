@@ -1,4 +1,4 @@
-from thomsonapi import Workflow, Log, Node, NodeDetail
+from thomsonapi import Workflow, Log, Node, NodeDetail, Job, JobDetail
 import config
 import json
 import logging, logging.config
@@ -7,7 +7,7 @@ from setting.Databasethomson import Database
 
 def get_workflow(host):
     """
-    host: name thomson
+    host: thomson name
     """
     Worf = Workflow(host = host['host'], user = host['user'], passwd = host['passwd'])
     args =[]
@@ -24,7 +24,7 @@ def get_workflow(host):
 
 def get_node(host):
     """
-    host: name thomson
+    host: thomson name
     """
     node = Node(host = host['host'], user = host['user'], passwd = host['passwd'])
     args =[]
@@ -48,7 +48,7 @@ def get_node(host):
 def get_node_detail(host):
     """
     return array node detail
-    host : name thomson
+    host : thomson name
     """
     args = []
     lstnodeId = get_list_node_id(host['host'])
@@ -81,3 +81,35 @@ def get_list_node_id(host):
         logerr.error("Get node id  %s"%(e))
     finally:
         return args
+
+def get_job(host):
+    """
+    return array tuple, job, job param
+    host : thomson name
+    """
+    argsJob = []
+    argsJobPara = []
+    obJob = Job(host['host'], host['user'], host['passwd'])
+    try:
+        lstjId = obJob.get_jobid_list()
+        lstJob = obJob.get_job_detail_by_job_id(lstjId)
+        for item in lstJob:
+            isBackup = get_backup_job(host, item['jid'])
+            argsJob.append(item['jid'], host['host'], item['state'], item['status'], item['prog'], item['ver'], item['startdate'], item['enddate'])
+            argsJobPara.append(item['jid'], host['host'], item['jname'], item['wid'], isBackup)
+    except Exception as e:
+        logerr = getLog('Error Data')
+        logerr.error("Get Job %s"%(e))
+    finally:
+        return argsJob, argsJobPara
+
+def get_backup_job(host, jid):
+    """
+    return true/ flase
+    get define backup of job
+    """
+    jDetail = JobDetail(host['host'], host['user'], host['passwd'], jid)
+    args = json.loads(jDetail.get_param())
+    for item in args[0]["params"]:
+        return item['value'] if item['name'] == 'Define backup input' else 'flase'
+    return 'flase'

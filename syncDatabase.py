@@ -1,6 +1,5 @@
 #-*- encoding: utf-8
 from setting.Databasethomson import Database
-from thomson_api import Job, JobDetail, Workflow, Node
 from setting.File import File, getLog
 from setting import config as osDb
 import os
@@ -9,6 +8,7 @@ from Queue import Queue
 import time
 import logging, logging.config
 from setting.utils import *
+from thomson_api import Job, JobDetail, Workflow, Node
 
 threadLimiter = threading.BoundedSemaphore(10)
 
@@ -73,63 +73,29 @@ def create_tbNodeDetail():
 #################################
 
 #insert job table
-def insert_job(host=None):
+def insert_job(session=None, host=None):
     # create logger
     #logger = getLog('Get query insert Job %s'%(host['host']))
     logger = getLog('Sync_Data')
     logger.setLevel(logging.INFO)
-    logger.info('Get query insert Job %s'%(host['host']))
     start = time.time()
-    strQuery = "insert into job (jid, host, state, status, prog, ver, startdate, enddate) values"
+    # strQuery = "insert into job (jid, host, state, status, prog, ver, startdate, enddate) values"
     try:
-        response_xml = Job(host).get_job_xml()
-        sql = Job(host).parse_xml_2_query(response_xml)[:-1]
+        dataJob, dataPara = get_job(host)
+        logger.info('Get query insert Job %s completed %s'%(host['host'], time.time() - start))
+        db = Database()
+        db.many_insert(session, 'job', dataJob, 'jid', 'host', 'state', 'status', 'prog', 'ver', 'startdate', 'enddate')
+        db.many_insert(session, 'job_param', dataPara, 'jib', 'host', 'jname', 'wid')
+        return 1
     except Exception as e:
         logerr = getLog('Error_Sync_Data')
         logerr.error('Get Log %s'%(e))
-        return 1
-    if len(sql):
-        sql = strQuery + sql + ";commit;"
-        main_Q.put(sql)
-        main_Q.task_done()
-        logger.info('Completed %s.' %(time.time() - start))
-    try:
-        File('sql/').write_log("job.sql", sql)
-    except Exception as e:
-        logerr = getLog('Error_Sync_Data')
-        logerr.error('Get SQL Job error: %s'%(e))
-    return 0
-
-#array list jid
-def get_lstJob_id(host):
-    response_xml = Job(host).get_job_xml()
-    return Job(host).count_job(response_xml)
-
+        return 0
+    finally:
+        return 0
 
 #insert workflow table
-def insert_workflow(host=None):
-    #create logger
-    #logger = getLog('Get query insert Workflow %s'%(host['host']))
-    logger = getLog('Sync_Data')
-    logger.setLevel(logging.INFO)
-    logger.info('Get query insert Workflow %s'%(host['host']))
-    start = time.time()
-    sql = "insert into  workflow(wid, name, host, pubver, priver) values"
-    try:
-         response_xml = Workflow(host)
-         response_xml = response_xml.parse_xml_2_query(response_xml.get_workflow())
-         sql += response_xml[:-1]+";commit;"
-         File("sql/").write_log("workflow.sql", sql)
-         main_Q.put(sql)
-         main_Q.task_done()
-         logger.info('Completed in %s.' %(time.time() - start))
-    except Exception as e:
-         logerr = getLog('Error_Sync_Data')
-         logerr.error('Get Workflow %s'%(e))
-         return 1
-    return 0
-
-def insert_workflow_many(session = None, host=None):
+def insert_workflow(session = None, host=None):
     logger = getLog('Sync_Data')
     logger.setLevel(logging.INFO)
     #logger.info('Get query insert Workflow %s'%(host['host']))
@@ -190,12 +156,12 @@ def main():
         logger = getLog('Sync_Data')
         logger.info('Final truncate table')
     for host in osDb.THOMSON_HOST:
-        #thread_job = threading.Thread(target=insert_job, kwargs={'host':host})
-        #list_Jobs.append(thread_job)
-        #thread_workflow = threading.Thread(target=insert_workflow_many, kwargs={'session':session, 'host':host})
+        thread_job = threading.Thread(target=insert_job, kwargs={'session': session, 'host':host})
+        list_Jobs.append(thread_job)
+        #thread_workflow = threading.Thread(target=insert_workflow, kwargs={'session':session, 'host':host})
         #list_Jobs.append(thread_workflow)
-        thread_node = threading.Thread(target=insert_node, kwargs={'session':session, 'host':host})
-        list_Jobs.append(thread_node)
+        #thread_node = threading.Thread(target=insert_node, kwargs={'session':session, 'host':host})
+        #list_Jobs.append(thread_node)
     for job in list_Jobs:
         job.daemon = True
         job.start()
