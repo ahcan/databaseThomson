@@ -82,7 +82,7 @@ class Database:
             self.close_connect(session)
             logger.info('Insert workflow complited in %s.'%(time.time()-start))
         except Exception as e:
-            logerr = getLog('Error_Data')
+            logerr = getLog('Error_Sync_Data')
             self.close_connect(session)
             logerr.error('Insert workflow error: %s.'%(e))
             return 0
@@ -98,6 +98,8 @@ class Database:
         """
         col = ','
         val = ','
+        flag = True
+        count = 0
         for item in args:
             col +='%s,'%(item)
             val +='%s,'
@@ -108,23 +110,32 @@ class Database:
         cur = session.cursor()
         start = time.time()
         logger = getLog('Sync_Data')
-        try:
-            for item in data:
-                cur.execute(sql, item)
-                host = item[2]
-            #cur.execute('select * from workflow where host = \'{0}\''.format(host))
-            #results = cur.fetchall()
-            #print "{0}-{1}".format(host, len(results))
-            session.commit()
-            #self.close_connect(session)
-            logger.info('Insert {0} complited in {1}.'.format(table, time.time()-start))
-        except Exception as e:
-            logerr = getLog('Error_Data')
-            self.close_connect(session)
-            logerr.error('Insert {0} error: {1}.'.format(table, e))
-            return 0
-        finally:
-            return 0
+        while flag and count <= 3:
+             try:
+                 host = ''
+                 for item in data:
+                     #print item[1]
+                     cur.execute(sql, item)
+                 #host = item[1]
+                 #cur.execute('select * from workflow where host = \'{0}\''.format(host))
+                 #results = cur.fetchall()
+                 #print "{0}-{1}".format(host, len(results))
+                 session.commit()
+                 #self.close_connect(session)
+                 logger.info('Insert {0} - {1} complited in {2}.'.format(table, host, time.time()-start))
+                 flag = False
+                 count +=1
+                 return 1
+             except Exception as e:
+                 logerr = getLog('Error_Sync_Data')
+                 #self.close_connect(session)
+                 logger.error('Insert {0} error'.format(table))
+                 logerr.error('Insert {0} error: {1}.'.format(table, e))
+                 flag = True
+                 count +=1
+                 raise
+             print "+++++++++++raise++++++++++"
+        return 0
 
     def many_update(self, table, data, *args):
         """

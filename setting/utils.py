@@ -16,7 +16,7 @@ def get_workflow(host):
         lstWorf = Worf.get_workflow()
         lstWorf = json.loads(lstWorf)
         for item in lstWorf:
-            args.append((item['wid'], item['name'], host['host']))
+            args.append((item['wid'], host['host'], item['name']))
     except Exception as e:
         logerr.error("Get worlkfow %s"%(e))
         raise
@@ -77,7 +77,7 @@ def get_list_node_id(host):
          for item in res:
              args.append(item[0])
     except Exception as e:
-        logerr = getLog("Error_Data")
+        logerr = getLog("Error_Sync_Data")
         logerr.error("Get node id  %s"%(e))
     finally:
         return args
@@ -95,10 +95,11 @@ def get_job(host):
         lstJob = obJob.get_job_detail_by_job_id(lstjId)
         for item in lstJob:
             isBackup = get_backup_job(host, item['jid'])
-            argsJob.append(item['jid'], host['host'], item['state'], item['status'], item['prog'], item['ver'], item['startdate'], item['enddate'])
-            argsJobPara.append(item['jid'], host['host'], item['jname'], item['wid'], isBackup)
+            tmp = (item['jid'], host['host'], item['state'], item['status'], item['prog'], item['ver'], item['startdate'], item['enddate'])
+            argsJob.append(tmp)
+            argsJobPara.append((item['jid'], host['host'], item['jname'], item['wid'],"{0}".format(isBackup)))
     except Exception as e:
-        logerr = getLog('Error Data')
+        logerr = getLog('Error_Sync_Data')
         logerr.error("Get Job %s"%(e))
     finally:
         return argsJob, argsJobPara
