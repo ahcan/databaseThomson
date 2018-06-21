@@ -3,7 +3,8 @@ from setting.Databasethomson import Database
 from setting import config as osDb
 import os
 import time
-from setting.utils import *
+from setting.File import File, getLog
+import logging, logging.config
 
 def truncate_table(session, argsql):
     db = Database()
@@ -17,6 +18,9 @@ def truncate_table(session, argsql):
             session.commit()
             flag = False
             count +=1
+            logger = getLog('Sync_Data')
+            logger.info('Final truncate table')
+            print "completed"
             return 1
         except Exception as e:
             logerr = getLog('Error_Sync_Data')
@@ -27,6 +31,7 @@ def truncate_table(session, argsql):
             logger = getLog('Sync_Data')
             logger.info('Final truncate table')
     return 0
+
 def main():
     #time.sleep(1800)
     sqlTruncate =[ "truncate workflow;", "alter table workflow auto_increment = 1;", "truncate node;", "alter table node auto_increment = 1;", "truncate node_detail;", "alter table node_detail auto_increment = 1;", "truncate job_param;", "alter table job_param auto_increment = 1;", "truncate job;", "alter table job auto_increment = 1;"]
