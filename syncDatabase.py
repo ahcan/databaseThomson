@@ -3,6 +3,7 @@ from setting.Databasethomson import Database
 from setting.File import File, getLog
 from setting import config as osDb
 import os
+import sys
 import threading
 from Queue import Queue
 import time
@@ -138,6 +139,7 @@ def insert_node(session = None, host=None):
         raise
     finally:
         db.close_connect(session)
+        print(session)
         return 0
 
 def truncate_table(session, argsql):
@@ -167,6 +169,7 @@ def main():
     list_Jobs = []
     sqlTruncate =[ "truncate workflow;", "truncate node;", "truncate node_detail;","alter table workflow auto_increment = 1;", "alter table node auto_increment = 1;", " alter table node_detail auto_increment = 1;"]
     for host in osDb.THOMSON_HOST:
+    #host = osDb.THOMSON_HOST[sys.argv[1]]
         thread_job = threading.Thread(target=insert_job, kwargs={'host':host})
         thread_job.start()
         list_Jobs.append(thread_job)
@@ -181,9 +184,7 @@ def main():
         #job.start()
     #    job.join()
     # main_Q.join()
-    time.sleep(120)
-    
-
+    time.sleep(5)
 
 if __name__ == '__main__':
     main()
