@@ -7,12 +7,14 @@ from File import getLog
 import time
 
 class Database:
-    def __init__(self):
+    def __init__(self, log = 'Sync_Data', logerror = 'Error_Sync_Data'):
         self.db = osDb.DATABASE_NAME
         self.user = osDb.DATABASE_USER
         self.password = osDb.DATABASE_PASSWORD
         self.host = osDb.DATABASE_HOST
         self.port = osDb.DATABASE_PORT
+        self.logger = getLog(log)
+        self.logerr = getLog(logerror)
 
     def connect(self):
         return mdb.connect(host=self.host, port=self.port, user=self.user, passwd=self.password, db=self.db, charset='utf8')
@@ -109,7 +111,6 @@ class Database:
         #session = self.connect()
         cur = session.cursor()
         start = time.time()
-        logger = getLog('Sync_Data')
         while flag and count <= 3:
              try:
                  host = ''
@@ -122,15 +123,14 @@ class Database:
                  #print "{0}-{1}".format(host, len(results))
                  session.commit()
                  #self.close_connect(session)
-                 logger.info('Insert {0} - {1} complited in {2}.'.format(table, host, time.time()-start))
+                 self.logger.info('Insert {0} - {1} complited in {2}.'.format(table, host, time.time()-start))
                  flag = False
                  count +=1
                  return 1
              except Exception as e:
-                 logerr = getLog('Error_Sync_Data')
                  #self.close_connect(session)
-                 logger.error('Insert {0} error'.format(table))
-                 logerr.error('Insert {0} error: {1}.'.format(table, e))
+                 self.logger.error('Insert {0} error'.format(table))
+                 self.logerr.error('Insert {0} error: {1}.'.format(table, e))
                  flag = True
                  count +=1
                  raise

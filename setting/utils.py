@@ -88,21 +88,39 @@ def get_job(host):
     host : thomson name
     """
     argsJob = []
-    argsJobPara = []
+    #argsJobPara = []
     obJob = Job(host['host'], host['user'], host['passwd'])
     try:
-        lstjId = obJob.get_jobid_list()
-        lstJob = obJob.get_job_detail_by_job_id(lstjId)
+        #lstjId = obJob.get_jobid_list()
+        lstJob = obJob.get_job_non_jname()
         for item in lstJob:
-            isBackup = get_backup_job(host, item['jid'])
+            #isBackup = get_backup_job(host, item['jid'])
             tmp = (item['jid'], host['host'], item['state'], item['status'], item['prog'], item['ver'], item['startdate'], item['enddate'])
             argsJob.append(tmp)
-            argsJobPara.append((item['jid'], host['host'], item['jname'], item['wid'],"{0}".format(isBackup)))
+            #argsJobPara.append((item['jid'], host['host'], item['jname'], item['wid'],"{0}".format(isBackup)))
     except Exception as e:
         logerr = getLog('Error_Sync_Data')
         logerr.error("Get Job %s"%(e))
     finally:
-        return argsJob, argsJobPara
+        return argsJob
+
+def get_job_param(host):
+    """
+     return array tuple(job param)
+    """
+    argsJobparam = []
+    obJob = Job(host['host'], host['user'], host['passwd'])
+    try:
+        lstjId = obJob.get_jobid_list()
+        for item in lstjId:
+            jname, wid, backup = JobDetail(host['host'], host['user'], host['passwd'],item).get_job_name_w_backup()
+            argsJobparam.append((item, host['host'], jname, wid, backup))
+            #argsJobPara.append((item['jid'], host['host'], item['jname'], item['wid'],"{0}".format(isBackup)))
+    except Exception as e:
+        logerr = getLog('Error_Sync_Data')
+        logerr.error("Get Job Param %s"%(e))
+    finally:
+        return argsJobparam
 
 def get_backup_job(host, jid):
     """
