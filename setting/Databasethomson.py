@@ -116,7 +116,7 @@ class Database:
                  for item in data:
                      #print item[1]
                      cur.execute(sql, item)
-                 #host = item[1]
+                     host = item[1]
                  #cur.execute('select * from workflow where host = \'{0}\''.format(host))
                  #results = cur.fetchall()
                  #print "{0}-{1}".format(host, len(results))
