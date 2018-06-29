@@ -19,7 +19,7 @@ def truncate_table(session, argsql):
             flag = False
             count +=1
             logger = getLog('Sync_Data')
-            logger.info('Final truncate table')
+            logger.info('Complete truncate table')
             print "completed"
             return 1
         except Exception as e:
