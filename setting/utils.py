@@ -115,6 +115,7 @@ def get_job_param(host):
         for item in lstjId:
             jname, wid, backup = JobDetail(host['host'], host['user'], host['passwd'],item).get_job_name_w_backup()
             argsJobparam.append((item, host['host'], jname, wid, backup))
+            print item
             #argsJobPara.append((item['jid'], host['host'], item['jname'], item['wid'],"{0}".format(isBackup)))
     except Exception as e:
         logerr = getLog('Error_Sync_Data')

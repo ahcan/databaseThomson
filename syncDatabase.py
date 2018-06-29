@@ -173,12 +173,12 @@ def main():
         thread_job = threading.Thread(target=insert_job, kwargs={'host':host})
         thread_job.start()
         list_Jobs.append(thread_job)
-        #thread_workflow = threading.Thread(target=insert_workflow, kwargs={'host':host})
-        #thread_workflow.start()
-        #list_Jobs.append(thread_workflow)
-        #thread_node = threading.Thread(target=insert_node, kwargs={'host':host})
-        #thread_node.start() 
-        #list_Jobs.append(thread_node)
+        thread_workflow = threading.Thread(target=insert_workflow, kwargs={'host':host})
+        thread_workflow.start()
+        list_Jobs.append(thread_workflow)
+        thread_node = threading.Thread(target=insert_node, kwargs={'host':host})
+        thread_node.start() 
+        list_Jobs.append(thread_node)
     #for job in list_Jobs:
         #job.daemon = False
         #job.start()
