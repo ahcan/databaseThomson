@@ -5,6 +5,7 @@ from setting import config as osDb
 import logging, logging.config
 from File import getLog
 import time
+import json
 
 class Database:
     def __init__(self, log = 'Sync_Data', logerror = 'Error_Sync_Data'):
@@ -78,6 +79,7 @@ class Database:
             for item in data:
                 cur.execute(sql, item)
                 #host = item[2]
+                cur.execute('commit;')
             #cur.execute('select * from workflow where host = \'{0}\''.format(host))
             #results = cur.fetchall()
             session.commit()
@@ -112,12 +114,16 @@ class Database:
         cur = session.cursor()
         start = time.time()
         while flag and count <= 3:
+             ccommit = 0
              try:
                  host = ''
+                 tmpsql = ','
                  for item in data:
-                     #print item[1]
-                     cur.execute(sql, item)
+                     tmpsql += '{0},'.format(json.dumps(item).replace('[','(').replace(']',')'))
                      host = item[1]
+                 tmpsql = tmpsql[1:-1]
+                 sql = "insert into {0} ({1}) values{2};".format(table, col, tmpsql)
+		 cur.execute(sql)
                  #cur.execute('select * from workflow where host = \'{0}\''.format(host))
                  #results = cur.fetchall()
                  #print "{0}-{1}".format(host, len(results))

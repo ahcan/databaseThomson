@@ -105,6 +105,7 @@ def insert_workflow(session = None, host=None):
     start = time.time()
     try:
         data = get_workflow(host)
+        print data
         logger.info('Get query insert Workflow %s Completed in %s.' %(host['host'], time.time() - start))
         truncate_table(session, ["delete from workflow where host = '{0}';".format(host['host'])])
         db = Database()
