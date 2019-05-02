@@ -1,0 +1,44 @@
+{
+     "version": 1,
+     "disable_existing_loggers": false,
+     "formatters":{
+        "simple": {
+            "format": "%(asctime)s - %(name)s - %(levelname)s - message: %(message)s"
+        },
+        "error": {
+            "format": "%(asctime)s - %(name)s - %(levelname)s - p%(process)s {%(pathname)s:%(lineno)d} - message: %(message)s"
+        }
+     },
+     "handlers": {
+        "cache_handler": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "level": "DEBUG",
+            "formatter": "simple",
+            "filename": "/var/log/Redit-huynt.log",
+            "maxBytes": 52428800,
+            "backupCount": 2,
+            "encoding": "utf8"
+        },
+        "cache_error_handler": {
+            "class": "logging.handlers.RotatingFileHandler",
+            "level": "ERROR",
+            "formatter": "error",
+            "filename": "/var/log/Redit-error-huynt.log",
+            "maxBytes": 52428800,
+            "backupCount": 2,
+            "encoding": "utf8"
+        }
+     },
+     "root": {
+        "level": "WARNING",
+        "handlers": []
+     },
+     "loggers": {
+        "Redit": {
+          "handlers": ["cache_handler"]
+        },
+        "Redit_error": {
+          "handlers": ["cache_error_handler"]
+        }
+     }
+}
