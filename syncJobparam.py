@@ -7,6 +7,8 @@ import threading
 import time
 import logging, logging.config #ghi log
 from setting.utils import *
+from Redit import Redit #cache redis
+import json
 
 class syncJobparam():
     """docstring for syncJobparam"""
@@ -19,33 +21,8 @@ class syncJobparam():
         self.logerr = getLog('Error_Job_Param')
         self.db = Database(log = 'Job_Param', logerror = 'Error_Job_Param')
         self.session = self.db.connect()
+
     #insert param to database
-    def insert_param(self):
-    # time.sleep(2)
-        try:
-            lstJob = self.get_lstJob_id(self.cfghost)
-        except Exception as e:
-            self.logerr.error('Get list Job: %s' %(e))
-        strQuery ="""delete from job_param where host = '%s'; insert into job_param(jid, host, name, wid, backup) values """%(self.cfghost['host'])
-        for job in lstJob:
-            param = JobDetail(job['jid'], job['host'])
-            job = threading.Thread(target=self.thread_sql, kwargs={'jobDetail':param})
-            job.daemon = True
-            job.start()
-            job.join()
-        self.jobp_Q.join()
-        self.logger.info('Job: %s Job inserted: %s' %(len(lstJob), self.jobp_Q.qsize()))
-        while not self.jobp_Q.empty():
-            strQuery += self.jobp_Q.get()
-        sql = strQuery[:-1] + ";commit;"
-        File("sql/").write_log("param_job.sql", sql)
-        try:
-            os.system(self.command_sql(sql.encode('utf-8')))
-            self.logger.info('Completed in %s' %(time.time() - start))
-        except Exception as e:
-            self.logerr.error("Insert Job list %s"%(e))
-            return 1
-        return 0
     def insert_job_param(self):
         start = time.time()
         try:
@@ -59,6 +36,7 @@ class syncJobparam():
             raise
         finally:
             self.db.close_connect(self.session)
+
     #connect to mysqld
     def command_sql(self, sql):
         return """mysql -u%s -p'%s' %s -h %s -e "%s" """%(osDb.DATABASE_USER, osDb.DATABASE_PASSWORD, osDb.DATABASE_NAME, osDb.DATABASE_HOST, sql)
@@ -105,13 +83,65 @@ class syncJobparam():
             finally:
                 self.logger.info('Final truncate table')
         return 0
-def start_insert(host = None):
+
+    # Cache data to redis
+    def set_cache(self, redis_key):
+        self.cache = Redit(key = redis_key)
+        try:
+            result = self.get_job_host()
+            if not result:
+                time.sleep(1)
+                result = self.get_job_host()
+                self.logerr.info("Get job list OK -{0}".format(len(result)))
+        except Exception as e:
+            self.logger.info("Get job list Error {0}".format(e))
+        try:
+            tmp = self.json_job_host(result)
+        except Exception as e:
+            self.logger.info("Convert Json Error {0}".format(e))
+        try:
+            self.cache.set_data(name= osDb.REDIS_NAME[0], val = tmp)
+            self.logger.info("Set data cache OK")
+        except Exception as e:
+            self.logger.info("Set data cache Error")
+
+    def get_job_host(self):
+        host = self.cfghost['host']
+        sql = "select j.jid, p.name, w.name, j.state, j.status, j.startdate, j.enddate, w.wid, j_a.auto, p.backup from job j \
+                INNER JOIN job_param p ON j.jid = p.jid and p.host = j.host and p.host = '%s'\
+                INNER JOIN workflow w ON w.wid = p.wid and w.host = p.host \
+                LEFT JOIN job_auto j_a ON j.jid = j_a.jid and j.host = j_a.host;"%(host)
+        return self.db.execute_query(sql)
+
+    def json_job_host(self, lstjob):
+        args = []
+        for item in lstjob:
+            JId,jobname,workflow_name,State,Status,StartDate,EndDate,workflowIdRef,backMain,isBackup = item[0], item[1], item[2], item[3], item[4], item[5], item[6], item[7], item[8], item[9]
+            args.append({'jname'    : jobname,
+                        'wid'       : workflowIdRef,
+                        'wname'     : workflow_name,
+                        'state'     : State,
+                        'status'    : Status,
+                        'jid'       : JId,
+                        # 'prog'      : int(Prog),
+                        'startdate' : StartDate \
+                        if StartDate else None,
+                        # 'ver'       : int(Ver),
+                        'enddate'   : EndDate \
+                        if EndDate else None,
+                        'iauto'     : backMain,
+                        'iBackup'  : isBackup
+                })
+        return json.dumps(args)
+
+def start_insert(host = None, index= 0):
     obj =  syncJobparam(host)
     obj.insert_job_param()
+    obj.set_cache(osDb.REDIS_KEY[index])
 
 def main():
     for host in osDb.THOMSON_HOST:
-        thread_param = threading.Thread(target=start_insert, kwargs={'host':host})
+        thread_param = threading.Thread(target=start_insert, kwargs={'host':host, 'index':osDb.THOMSON_HOST.index(host)})
         #thread_param.daemon = True
         thread_param.start()
         #thread_param.join()
