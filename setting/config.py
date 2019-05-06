@@ -32,3 +32,6 @@ THOMSON_HOST=[
         'url' : 'http://%s/services/Maltese' % ('172.17.5.110'),
     },
 ]
+
+REDIS_KEY=["thomson-hcm", "thomson-hni", "thomson-lab"]
+REDIS_NAME=['job_host']
