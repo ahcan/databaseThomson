@@ -5,6 +5,7 @@ from setting import getLog
 
 class Redit(object):
     def __init__(self, key):
+        # key Redis
         self.logger = getLog("Redit")
         self.logger.setLevel(logging.DEBUG)
         super(Redit, self).__init__()
@@ -27,6 +28,7 @@ class Redit(object):
         except Exception as e:
             self.logger.error(e)
             self.logger.debug("Set data Redit {0} Fail".format(self.key))
+            return False
 
     def get_all(self):
         try:
