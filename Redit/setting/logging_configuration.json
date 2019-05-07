@@ -14,7 +14,7 @@
             "class": "logging.handlers.RotatingFileHandler",
             "level": "DEBUG",
             "formatter": "simple",
-            "filename": "/var/log/Redit-huynt.log",
+            "filename": "/var/log/sync_Cache/Redit-huynt.log",
             "maxBytes": 52428800,
             "backupCount": 2,
             "encoding": "utf8"
@@ -23,7 +23,7 @@
             "class": "logging.handlers.RotatingFileHandler",
             "level": "ERROR",
             "formatter": "error",
-            "filename": "/var/log/Redit-error-huynt.log",
+            "filename": "/var/log/sync_Cache/Redit-error-huynt.log",
             "maxBytes": 52428800,
             "backupCount": 2,
             "encoding": "utf8"
