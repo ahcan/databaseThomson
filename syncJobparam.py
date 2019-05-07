@@ -92,18 +92,18 @@ class syncJobparam():
             if not result:
                 time.sleep(1)
                 result = self.get_job_host()
-                self.logerr.info("Get job list OK -{0}".format(len(result)))
+                self.logger.info("Get job list OK -{0}".format(len(result)))
         except Exception as e:
-            self.logger.info("Get job list Error {0}".format(e))
+            self.logerr.error("Get job list Error {0}".format(e))
         try:
             tmp = self.json_job_host(result)
         except Exception as e:
-            self.logger.info("Convert Json Error {0}".format(e))
+            self.logerr.error("Convert Json Error {0}".format(e))
         try:
             self.cache.set_data(name= osDb.REDIS_NAME[0], val = tmp)
             self.logger.info("Set data cache OK")
         except Exception as e:
-            self.logger.info("Set data cache Error")
+            self.logerr.error("Set data cache Error")
 
     def get_job_host(self):
         host = self.cfghost['host']
@@ -111,6 +111,7 @@ class syncJobparam():
                 INNER JOIN job_param p ON j.jid = p.jid and p.host = j.host and p.host = '%s'\
                 INNER JOIN workflow w ON w.wid = p.wid and w.host = p.host \
                 LEFT JOIN job_auto j_a ON j.jid = j_a.jid and j.host = j_a.host;"%(host)
+        print host
         return self.db.execute_query(sql)
 
     def json_job_host(self, lstjob):
