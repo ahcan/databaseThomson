@@ -168,9 +168,8 @@ def truncate_table(session, argsql):
 
 def main():
     list_Jobs = []
-    sqlTruncate =[ "truncate workflow;", "truncate node;", "truncate node_detail;","alter table workflow auto_increment = 1;", "alter table node auto_increment = 1;", " alter table node_detail auto_increment = 1;"]
+    #sqlTruncate =[ "truncate workflow;", "truncate node;", "truncate node_detail;","alter table workflow auto_increment = 1;", "alter table node auto_increment = 1;", " alter table node_detail auto_increment = 1;"]
     for host in osDb.THOMSON_HOST:
-    #host = osDb.THOMSON_HOST[sys.argv[1]]
         thread_job = threading.Thread(target=insert_job, kwargs={'host':host})
         thread_job.start()
         list_Jobs.append(thread_job)
@@ -180,12 +179,15 @@ def main():
         thread_node = threading.Thread(target=insert_node, kwargs={'host':host})
         thread_node.start() 
         list_Jobs.append(thread_node)
+    
+    # deamon Queue 
     #for job in list_Jobs:
         #job.daemon = False
         #job.start()
     #    job.join()
     # main_Q.join()
-    time.sleep(5)
+    #time.sleep(5)
 
 if __name__ == '__main__':
     main()
+    time.sleep(20)

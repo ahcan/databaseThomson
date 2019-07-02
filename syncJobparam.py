@@ -107,10 +107,8 @@ class syncJobparam():
 
     def get_job_host(self):
         host = self.cfghost['host']
-        sql = "select j.jid, p.name, w.name, j.state, j.status, j.startdate, j.enddate, w.wid, j_a.auto, p.backup from job j \
-                INNER JOIN job_param p ON j.jid = p.jid and p.host = j.host and p.host = '%s'\
-                INNER JOIN workflow w ON w.wid = p.wid and w.host = p.host \
-                LEFT JOIN job_auto j_a ON j.jid = j_a.jid and j.host = j_a.host;"%(host)
+        sql =" SELECT j.jid, pw.name, pw.wname, j.state, j.status, j.startdate, j.enddate, pw.wid, j_a.auto, pw.backup\
+               FROM (SELECT  w.name as wname, p.name, w.wid, p.jid, p.host, p.backup FROM job_param p, (Select wid, name, host from workflow where host = '{0}') w WHERE p.host = '{1}' and w.wid= p.wid) pw, job j LEFT JOIN job_auto j_a ON j.jid = j_a.jid AND j.host = j_a.host WHERE pw.jid = j.jid;".format(host,host)
         print host
         return self.db.execute_query(sql)
 
@@ -149,4 +147,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-    time.sleep(20)
+    time.sleep(2)
