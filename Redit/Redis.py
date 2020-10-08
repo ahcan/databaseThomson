@@ -11,6 +11,7 @@ class Redit(object):
         super(Redit, self).__init__()
         self.key = key
         POOL = redis.ConnectionPool(host=REDIS['host'], 
+                                    password=REDIS['password'],
                                     port=REDIS['port'], 
                                     db=REDIS['db'])
         self.conn = redis.Redis(connection_pool=POOL)

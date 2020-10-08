@@ -28,7 +28,7 @@ class syncJobparam():
         try:
             self.logger.info('Get job param %s' %(self.cfghost['host']))
             dataJobParam = get_job_param(self.cfghost)
-            self.logger.info('Completed in %s' %(time.time() - start))
+            self.logger.info('%s completed in %s' %(self.cfghost['host'] ,time.time() - start))
             self.truncate_table(["delete from job_param where host = '{0}';".format(self.cfghost['host'])])
             self.db.many_insert(self.session, 'job_param', dataJobParam, 'jid', 'host', 'name', 'wid', 'backup')
         except Exception as e:
@@ -92,7 +92,7 @@ class syncJobparam():
             if not result:
                 time.sleep(1)
                 result = self.get_job_host()
-                self.logger.info("Get job list OK -{0}".format(len(result)))
+            self.logger.info("Get job list OK -{0}".format(len(result)))
         except Exception as e:
             self.logerr.error("Get job list Error {0}".format(e))
         try:
@@ -103,13 +103,13 @@ class syncJobparam():
             self.cache.set_data(name= osDb.REDIS_NAME[0], val = tmp)
             self.logger.info("Set data cache OK")
         except Exception as e:
-            self.logerr.error("Set data cache Error")
+            self.logerr.error("Set data cache Error {0}".format(e))
 
     def get_job_host(self):
         host = self.cfghost['host']
         sql =" SELECT j.jid, pw.name, pw.wname, j.state, j.status, j.startdate, j.enddate, pw.wid, j_a.auto, pw.backup\
                FROM (SELECT  w.name as wname, p.name, w.wid, p.jid, p.host, p.backup FROM job_param p, (Select wid, name, host from workflow where host = '{0}') w WHERE p.host = '{1}' and w.wid= p.wid) pw, job j LEFT JOIN job_auto j_a ON j.jid = j_a.jid AND j.host = j_a.host WHERE pw.jid = j.jid;".format(host,host)
-        print host
+        #print host
         return self.db.execute_query(sql)
 
     def json_job_host(self, lstjob):

@@ -97,6 +97,8 @@ def get_job(host):
             #isBackup = get_backup_job(host, item['jid'])
             tmp = (item['jid'], host['host'], item['state'], item['status'], item['prog'], item['ver'], item['startdate'], item['enddate'])
             argsJob.append(tmp)
+            #logerr = getLog('Error_Sync_Data')
+            #logerr.error("Get Job %s"%(argsJob))
             #argsJobPara.append((item['jid'], host['host'], item['jname'], item['wid'],"{0}".format(isBackup)))
     except Exception as e:
         logerr = getLog('Error_Sync_Data')
