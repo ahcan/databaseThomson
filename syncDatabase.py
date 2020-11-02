@@ -82,7 +82,7 @@ def insert_job(session=None, host=None):
     start = time.time()
     try:
         dataJob = get_job(host)
-        logger.info('Get query insert Job %s completed %s'%(host['host'], time.time() - start))
+        logger.info('Get query insert Job %s completed %s and len %s'%(host['host'], time.time() - start, len(dataJob)))
         truncate_table(session, ["delete from job where host = '{0}';".format(host['host'])])
        # truncate_table(session, ["delete from job_param where host = '{0}';".format(host['host'])])
         db = Database()
@@ -90,7 +90,7 @@ def insert_job(session=None, host=None):
         #db.many_insert(session, 'job_param', dataPara, 'jid', 'host', 'name', 'wid', 'backup')
     except Exception as e:
         logerr = getLog('Error_Sync_Data')
-        logerr.error('Get Log {0}'.format(e))
+        logerr.error('Get Log {0} and len jobs {1}'.format(e,len(dataJob)))
     finally:
         db.close_connect(session)
         print(session)
