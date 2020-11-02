@@ -28,7 +28,7 @@ class syncJobparam():
         try:
             self.logger.info('Get job param %s' %(self.cfghost['host']))
             dataJobParam = get_job_param(self.cfghost)
-            self.logger.info('%s completed in %s' %(self.cfghost['host'] ,time.time() - start))
+            self.logger.info('%s completed in %s and len %s' %(self.cfghost['host'] ,time.time() - start, len(dataJobParam)))
             self.truncate_table(["delete from job_param where host = '{0}';".format(self.cfghost['host'])])
             self.db.many_insert(self.session, 'job_param', dataJobParam, 'jid', 'host', 'name', 'wid', 'backup')
         except Exception as e:
